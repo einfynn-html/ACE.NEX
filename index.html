@@ -104,7 +104,7 @@
             background: linear-gradient(to top, #020503 60%, transparent 100%);
         }
 
-        /* Container für die Buttons wegen relativer Ausrichtung des Dropdowns */
+        /* Container für die Buttons */
         .buttons-group {
             display: flex;
             gap: 12px;
@@ -131,7 +131,6 @@
             box-shadow: 0 15px 40px rgba(0, 255, 136, 0.5);
         }
 
-        /* Der Versionen-Button */
         .versions-btn {
             display: inline-flex;
             align-items: center;
@@ -154,7 +153,7 @@
             box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
         }
 
-        /* Stylisches Versionen-Dropdown-Menü (Glassmorphismus) */
+        /* Dropdown-Menü */
         .versions-dropdown {
             position: absolute;
             bottom: calc(100% + 12px);
@@ -202,7 +201,6 @@
             padding-left: 20px;
         }
 
-        /* Spezielles Styling für die "Current"-Auswahl */
         .dropdown-item.current-highlight {
             background: rgba(0, 255, 136, 0.08);
             border: 1px solid rgba(0, 255, 136, 0.2);
@@ -212,7 +210,6 @@
             background: rgba(0, 255, 136, 0.18);
         }
 
-        /* Zwischenüberschrift / Trennung */
         .dropdown-section-title {
             font-size: 0.75rem;
             text-transform: uppercase;
@@ -313,25 +310,25 @@
            ========================================== */
         
         const apkFiles = [
-             "ACE Launcehr 1.0.0.38.apk",
-             "ACE Launcehr 1.0.0.37.apk",
-             "ACE Launcehr 1.0.0.36.apk",
-             "ACE Launcehr 1.0.0.35.apk",
-             "ACE Launcehr 1.0.0.34.apk",
-             "ACE Launcehr 1.0.0.33.apk",
-             "ACE Launcehr 1.0.0.30.apk",
-             "ACE Launcehr 1.0.0.29.apk",
-             "ACE Launcehr 1.0.0.28.apk",
-             "ACE Launcehr 1.0.0.27.apk",
-             "ACE Launcehr 1.0.0.26.apk",
-             "ACE Launcehr 1.0.0.25.apk",
-             "ACE Launcehr 1.0.0.24.apk",
-             "ACE Launcehr 1.0.0.23.apk",
-             "ACE Launcehr 1.0.0.22.apk",
+             "ACE Launcher 1.0.0.38.apk",
+             "ACE Launcher 1.0.0.37.apk",
+             "ACE Launcher 1.0.0.36.apk",
+             "ACE Launcher 1.0.0.35.apk",
+             "ACE Launcher 1.0.0.34.apk",
+             "ACE Launcher 1.0.0.33.apk",
+             "ACE Launcher 1.0.0.30.apk",
+             "ACE Launcher 1.0.0.29.apk",
+             "ACE Launcher 1.0.0.28.apk",
+             "ACE Launcher 1.0.0.27.apk",
+             "ACE Launcher 1.0.0.26.apk",
+             "ACE Launcher 1.0.0.25.apk",
+             "ACE Launcher 1.0.0.24.apk",
+             "ACE Launcher 1.0.0.23.apk",
+             "ACE Launcher 1.0.0.22.apk",
              "ACE Launcher 1.0.0.21.apk",
              "ACE Launcher 1.0.0.20.apk",
              "ACE Launcher 1.0.0.19.apk",
-             "ACE Launcehr 1.0.0.18.apk",
+             "ACE Launcher 1.0.0.18.apk",
              "ACE Launcher 1.0.0.17.apk",
              "ACE Launcher 1.0.0.16.apk",
              "ACE Launcher 1.0.0.15.apk",
@@ -341,6 +338,13 @@
         function extractVersion(filename) {
             const match = filename.match(/(\d+\.\d+\.\d+\.\d+|\d+\.\d+\.\d+)/);
             return match ? match[0] : "0.0.0";
+        }
+
+        // Hilfsfunktion zur Bereinigung des Display-Namens im UI
+        function formatCleanName(filename) {
+            return filename
+                .replace(/\.apk$/i, '')        // Entfernt die Dateiendung .apk
+                .replace('Launcehr', 'Launcher'); // Korrigiert eventuelle Tippfehler im Namen
         }
 
         function sortApks(a, b) {
@@ -366,10 +370,10 @@
             const latestApk = apkFiles[0];
             const latestVersion = extractVersion(latestApk);
 
-            // 1. Haupt-Button konfigurieren
+            // 1. Haupt-Button & Footer-Text konfigurieren (bereinigt)
             mainDownloadBtn.href = latestApk;
             mainDownloadBtn.setAttribute('download', latestApk);
-            mainApkTitle.textContent = latestApk;
+            mainApkTitle.textContent = formatCleanName(latestApk); // Saubere Anzeige
             mainApkDetails.textContent = `Neueste Version ${latestVersion} • APK-Datei`;
 
             // 2. "Current"-Eintrag ganz oben im Dropdown erstellen
