@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ACE Launcher — Evolution für dein Android</title>
+    <title>ACE Launcher — Evolution for your Android</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;700&display=swap');
 
@@ -22,6 +22,88 @@
             flex-direction: column;
             position: relative;
             overflow: hidden;
+        }
+
+        /* --- LOADING SCREEN (PRELOADER) --- */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #020503;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease, visibility 0.5s;
+            gap: 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(0, 255, 136, 0.1);
+            border-radius: 50%;
+            border-top-color: #00ff88;
+            animation: spin 1s linear infinite;
+        }
+
+        .loader-text {
+            font-family: 'Space Grotesk', sans-serif;
+            color: #a0f0c8;
+            font-size: 1rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* --- INFO POPUP --- */
+        #info-popup {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(4, 14, 9, 0.9);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            backdrop-filter: blur(15px);
+            padding: 16px 28px;
+            border-radius: 12px;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 255, 136, 0.1);
+            opacity: 0;
+            visibility: hidden;
+            transition: transform 2s cubic-bezier(0.4, 0, 0.2, 1), opacity 2s ease;
+            pointer-events: none; /* Prevents interaction/clicks */
+            text-align: center;
+            max-width: 90%;
+        }
+
+        #info-popup.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #info-popup.fade-out {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+            transition: all 0.5s ease;
+        }
+
+        .popup-title {
+            font-family: 'Space Grotesk', sans-serif;
+            color: #00ff88;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .popup-text {
+            color: #ffffff;
+            font-size: 0.95rem;
+            opacity: 0.9;
         }
 
         /* --- BACKGROUND CONTAINER --- */
@@ -60,7 +142,7 @@
             pointer-events: none;
         }
 
-        /* --- HEADER BEREICH (SUPPORT BUTTON) --- */
+        /* --- HEADER AREA (SUPPORT BUTTON) --- */
         .top-header {
             position: absolute;
             top: 0;
@@ -97,7 +179,7 @@
             transform: translateY(-2px);
         }
 
-        /* --- HAUPTINHALT --- */
+        /* --- MAIN CONTENT --- */
         .main-content {
             flex-grow: 1;
             display: flex;
@@ -130,7 +212,7 @@
             text-shadow: 0 4px 14px rgba(0,0,0,0.6);
         }
 
-        /* --- FOOTER BEREICH --- */
+        /* --- FOOTER AREA --- */
         .bottom-bar {
             width: 100%;
             padding: 40px 10%;
@@ -292,7 +374,7 @@
             color: #628a73;
         }
 
-        /* --- BRANDING BEREICH --- */
+        /* --- BRANDING AREA --- */
         .branding {
             text-align: right;
             font-size: 0.85rem;
@@ -333,6 +415,16 @@
 </head>
 <body>
 
+    <div id="loader">
+        <div class="spinner"></div>
+        <div class="loader-text">Loading ACE Launcher...</div>
+    </div>
+
+    <div id="info-popup">
+        <div class="popup-title">Latest build available</div>
+        <div class="popup-text" id="popup-filename">Searching version...</div>
+    </div>
+
     <div class="bg-container" id="squares-container"></div>
     <div class="bg-vignette"></div>
 
@@ -348,7 +440,7 @@
 
     <main class="main-content">
         <h1 class="title">ACE<br>LAUNCHER</h1>
-        <p class="subtitle">Das intelligente Dashboard-Erlebnis für dein Android-Smartphone. Minimalistisch im Design.</p>
+        <p class="subtitle">The intelligent dashboard experience for your Android smartphone. Minimalist in design.</p>
     </main>
 
     <footer class="bottom-bar">
@@ -360,7 +452,7 @@
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
                     </svg>
-                    Download starten
+                    Start Download
                 </a>
                 
                 <button class="versions-btn" id="versions-toggle-btn">
@@ -376,19 +468,19 @@
             </div>
             
             <div class="apk-info" id="main-apk-info">
-                <span class="apk-name" id="main-apk-title">Analysiere Archiv...</span>
-                <span class="apk-meta" id="main-apk-details">Suche nach verfügbaren Builds...</span>
+                <span class="apk-name" id="main-apk-title">Analyzing archive...</span>
+                <span class="apk-meta" id="main-apk-details">Searching for available builds...</span>
             </div>
         </div>
 
         <div class="branding">
-            Sicherheitshinweis:<br>Lade den ACE Launcher <span>ausschließlich über diese Website</span> herunter.
+            Security Notice:<br>Download ACE Launcher <span>exclusively through this website</span>.
         </div>
     </footer>
 
     <script>
         /* ==========================================
-           1. AUTOMATISCHE APK-VERWALTUNG & SORTIERUNG
+           1. AUTOMATIC APK MANAGEMENT & SORTING
            ========================================== */
         
         const apkFiles = [
@@ -447,6 +539,7 @@
         const mainApkDetails = document.getElementById('main-apk-details');
         const versionsMenu = document.getElementById('versions-menu');
         const versionsToggleBtn = document.getElementById('versions-toggle-btn');
+        const popupFilename = document.getElementById('popup-filename');
 
         if (apkFiles.length > 0) {
             const latestApk = apkFiles[0];
@@ -455,21 +548,24 @@
             mainDownloadBtn.href = latestApk;
             mainDownloadBtn.setAttribute('download', latestApk);
             mainApkTitle.textContent = formatCleanName(latestApk);
-            mainApkDetails.textContent = `Aktuellste Version v${latestVersion} • Stabil`;
+            mainApkDetails.textContent = `Latest Version v${latestVersion} • Stable`;
+            
+            // Set file name in popup
+            popupFilename.textContent = latestApk;
 
             const currentItem = document.createElement('a');
             currentItem.href = latestApk;
             currentItem.setAttribute('download', latestApk);
             currentItem.classList.add('dropdown-item', 'current-highlight');
             currentItem.innerHTML = `
-                <span style="font-weight: 600; color: #00ff88;">Empfohlen (v${latestVersion})</span>
-                <span class="latest-badge">Aktiv</span>
+                <span style="font-weight: 600; color: #00ff88;">Recommended (v${latestVersion})</span>
+                <span class="latest-badge">Active</span>
             `;
             versionsMenu.appendChild(currentItem);
 
             const sectionTitle = document.createElement('div');
             sectionTitle.classList.add('dropdown-section-title');
-            sectionTitle.textContent = "Versionsverlauf";
+            sectionTitle.textContent = "Version History";
             versionsMenu.appendChild(sectionTitle);
 
             apkFiles.forEach((apk, index) => {
@@ -481,7 +577,7 @@
                 
                 item.innerHTML = `
                     <span>Version ${versionNum}</span>
-                    ${index === 0 ? '<span style="color: #00ff88; font-size:0.85rem; font-weight:600;">Neu</span>' : '<span style="opacity:0.4; font-size:0.85rem;">APK</span>'}
+                    ${index === 0 ? '<span style="color: #00ff88; font-size:0.85rem; font-weight:600;">New</span>' : '<span style="opacity:0.4; font-size:0.85rem;">APK</span>'}
                 `;
                 versionsMenu.appendChild(item);
             });
@@ -497,7 +593,33 @@
         });
 
         /* ==========================================
-           2. ANIMIERTER & INTERAKTIVER HINTERGRUND
+           2. LOADER & POPUP MANAGEMENT
+           ========================================== */
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loader');
+            const popup = document.getElementById('info-popup');
+
+            // 1. Hide loading screen
+            loader.style.opacity = '0';
+            loader.style.visibility = 'hidden';
+
+            // 2. Trigger info popup after loading
+            setTimeout(() => {
+                popup.classList.add('show'); // Uses 2 seconds for transition (CSS)
+                
+                // 3. Hide again after 5 seconds total
+                setTimeout(() => {
+                    popup.classList.add('fade-out');
+                    setTimeout(() => {
+                        popup.classList.remove('show', 'fade-out');
+                    }, 500); // Waits for the fast fade-out animation to end
+                }, 5000);
+
+            }, 200); // Small delay after loader disappears
+        });
+
+        /* ==========================================
+           3. ANIMATED & INTERACTIVE BACKGROUND
            ========================================== */
         const container = document.getElementById('squares-container');
         const greenColors = ['#04120a', '#0a2413', '#11351c', '#1b4d2a', '#286e3d', '#3d9c5b', '#00ff88'];
