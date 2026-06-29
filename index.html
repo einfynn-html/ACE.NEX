@@ -215,6 +215,20 @@
             background: rgba(0, 255, 136, 0.18);
         }
 
+        .dropdown-item-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .download-count {
+            font-size: 0.75rem;
+            color: #628a73;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
         .dropdown-section-title {
             font-size: 0.75rem;
             text-transform: uppercase;
@@ -378,6 +392,15 @@
             return 0;
         }
 
+        // --- HILFSFUNKTION FÜR SIMULIERTE DOWNLOADZAHLEN ---
+        // (Für echte Zahlen müsste hier eine API-Anfrage an deinen Server erfolgen)
+        function getSimulatedDownloads(index, totalFiles) {
+            // Ältere Versionen (höherer Index) haben mehr Downloads
+            const baseDownloads = (totalFiles - index) * 1450;
+            const randomVariance = Math.floor(Math.random() * 500);
+            return (baseDownloads + randomVariance).toLocaleString('de-DE');
+        }
+
         apkFiles.sort(sortApks);
 
         const mainDownloadBtn = document.getElementById('main-download-btn');
@@ -389,6 +412,7 @@
         if (apkFiles.length > 0) {
             const latestApk = apkFiles[0];
             const latestVersion = extractVersion(latestApk);
+            const latestDownloads = getSimulatedDownloads(0, apkFiles.length);
 
             mainDownloadBtn.href = latestApk;
             mainDownloadBtn.setAttribute('download', latestApk);
@@ -400,7 +424,13 @@
             currentItem.setAttribute('download', latestApk);
             currentItem.classList.add('dropdown-item', 'current-highlight');
             currentItem.innerHTML = `
-                <span style="font-weight: 600; color: #00ff88;">Empfohlen (v${latestVersion})</span>
+                <div class="dropdown-item-content">
+                    <span style="font-weight: 600; color: #00ff88;">Empfohlen (v${latestVersion})</span>
+                    <span class="download-count">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        ${latestDownloads} Mal geladen
+                    </span>
+                </div>
                 <span class="latest-badge">Aktiv</span>
             `;
             versionsMenu.appendChild(currentItem);
@@ -413,12 +443,20 @@
             apkFiles.forEach((apk, index) => {
                 const versionNum = extractVersion(apk);
                 const item = document.createElement('a');
+                const downloadCount = getSimulatedDownloads(index, apkFiles.length);
+
                 item.href = apk;
                 item.setAttribute('download', apk);
                 item.classList.add('dropdown-item');
                 
                 item.innerHTML = `
-                    <span>Version ${versionNum}</span>
+                    <div class="dropdown-item-content">
+                        <span>Version ${versionNum}</span>
+                        <span class="download-count">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            ${downloadCount}
+                        </span>
+                    </div>
                     ${index === 0 ? '<span style="color: #00ff88; font-size:0.85rem; font-weight:600;">Neu</span>' : '<span style="opacity:0.4; font-size:0.85rem;">APK</span>'}
                 `;
                 versionsMenu.appendChild(item);
