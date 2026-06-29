@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACE Launcher - Download</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Space+Grotesk:wght@700&display=swap');
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020503;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* --- BACKGROUND CONTAINER --- */
+        .bg-container {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        /* Styling für die dynamisch generierten Quadrate */
+        .sq {
+            position: absolute;
+            border-radius: 12px;
+            mix-blend-mode: screen; /* Lässt die Quadrate wie im Bild weich ineinander übergehen */
+            pointer-events: none;
+            animation: floatAround infinite ease-in-out;
+        }
+
+        /* Sanfte, schwebende Animation */
+        @keyframes floatAround {
+            0%, 100% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+                opacity: var(--base-opacity);
+            }
+            50% {
+                transform: translate(var(--drift-x), var(--drift-y)) rotate(var(--drift-rot)) scale(1.05);
+                opacity: calc(var(--base-opacity) + 0.15);
+            }
+        }
+
+        /* Dunkle Vignette für perfekte Lesbarkeit des Textes */
+        .bg-vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 40%, rgba(2, 5, 3, 0.1) 0%, rgba(2, 5, 3, 0.85) 80%);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* --- HAUPTINHALT --- */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 10%;
+            z-index: 5;
+        }
+
+        .title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(4rem, 8vw, 8rem);
+            line-height: 0.95;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #ffffff 30%, #a0f0c8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+
+        .subtitle {
+            font-size: 1.4rem;
+            font-weight: 300;
+            color: #a0f0c8;
+            max-width: 500px;
+            line-height: 1.5;
+            opacity: 0.9;
+            text-shadow: 0 4px 14px rgba(0,0,0,0.6);
+        }
+
+        /* --- FOOTER (Unten links) --- */
+        .bottom-bar {
+            width: 100%;
+            padding: 40px 10%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 24px;
+            z-index: 10;
+            background: linear-gradient(to top, #020503 60%, transparent 100%);
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #00ff88 0%, #00e67a 100%);
+            color: #020503;
+            font-size: 1.15rem;
+            font-weight: 600;
+            padding: 18px 44px;
+            border-radius: 14px;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 30px rgba(0, 255, 136, 0.3);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(0, 255, 136, 0.5);
+        }
+
+        .apk-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .apk-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.2rem;
+            color: #ffffff;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .apk-meta {
+            font-size: 0.95rem;
+            color: #628a73;
+        }
+
+        /* --- RESPONSIVE DESIGN --- */
+        @media (max-width: 768px) {
+            .main-content { padding: 0 6%; }
+            .bottom-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 30px 6% 40px 6%;
+                gap: 16px;
+            }
+            .download-btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-container" id="squares-container"></div>
+    <div class="bg-vignette"></div>
+
+    <main class="main-content">
+        <h1 class="title">ACE<br>LAUNCHER</h1>
+        <p class="subtitle">Der moderne Android Dashboard Launcher. Minimalistisch, performant und intelligent strukturiert.</p>
+    </main>
+
+    <footer class="bottom-bar">
+        <a href="ACE Launcher 1.0.0.38.apk" class="download-btn" download>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Jetzt herunterladen
+        </a>
+        
+        <div class="apk-info">
+            <span class="apk-name">ACE Launcher 1.0.0.38.apk</span>
+            <span class="apk-meta">Version 1.0.0.38 • 959 KB</span>
+        </div>
+    </footer>
+
+    <script>
+        const container = document.getElementById('squares-container');
+        
+        // Die Farb-Frequenzen aus deinem Bild
+        const greenColors = ['#04120a', '#0a2413', '#11351c', '#1b4d2a', '#286e3d', '#3d9c5b', '#00ff88'];
+        const purpleColors = ['#2b061a', '#4a0a2c', '#1c051a'];
+
+        const totalSquares = 130; // Anzahl der Quadrate für maximale Dichte
+
+        for (let i = 0; i < totalSquares; i++) {
+            const square = document.createElement('div');
+            square.classList.add('sq');
+
+            // Zufällige Position auf dem gesamten Bildschirm (leicht erweitert wegen der Flug-Animation)
+            const posX = Math.random() * 120 - 10;
+            const posY = Math.random() * 120 - 10;
+            square.style.left = posX + '%';
+            square.style.top = posY + '%';
+
+            // Zufällige Größe (zwischen 60px und 220px)
+            const size = Math.floor(Math.random() * 160) + 60;
+            square.style.width = size + 'px';
+            square.style.height = size + 'px';
+
+            // Farbverteilung: Oben links (X < 35%, Y < 45%) bevorzugt lila Akzente, sonst Grün-Töne
+            let colorPool = greenColors;
+            if (posX < 35 && posY < 45 && Math.random() > 0.3) {
+                colorPool = purpleColors;
+            } else if (Math.random() > 0.92) { 
+                colorPool = purpleColors; // Seltene lila Tupfer im restlichen Bild
+            }
+            square.style.backgroundColor = colorPool[Math.floor(Math.random() * colorPool.length)];
+
+            // Individuelle, leichte Flug-Richtung und Rotation per CSS-Variablen
+            const driftX = (Math.random() * 60 - 30) + 'px'; // Leichtes Hin- und Herfliegen um max 30px
+            const driftY = (Math.random() * 60 - 30) + 'px';
+            const driftRot = (Math.random() * 30 - 15) + 'deg'; // Sanftes Eindrehen um max 15 Grad
+            const baseOpacity = (Math.random() * 0.4 + 0.35); // Deckkraft zwischen 35% und 75% für Tiefenwirkung
+
+            square.style.setProperty('--drift-x', driftX);
+            square.style.setProperty('--drift-y', driftY);
+            square.style.setProperty('--drift-rot', driftRot);
+            square.style.setProperty('--base-opacity', baseOpacity);
+
+            // Zufällige Animationsdauer und negativer Delay (damit alle sofort versetzt starten)
+            square.style.animationDuration = (Math.random() * 12 + 10) + 's'; // Zwischen 10 und 22 Sekunden
+            square.style.animationDelay = '-' + (Math.random() * 20) + 's';
+
+            container.appendChild(square);
+        }
+    </script>
+</body>
+</html>
