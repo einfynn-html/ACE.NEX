@@ -21,7 +21,7 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         /* --- PURE MINIMALIST BLACK & WHITE LOADING SCREEN --- */
@@ -64,7 +64,7 @@
             pointer-events: none;
             text-align: center;
             max-width: 90%;
-            min-width: 380px;
+            min-width: 320px;
         }
 
         #info-popup.show {
@@ -83,16 +83,8 @@
             font-family: 'Space Grotesk', sans-serif;
             color: #00ff88;
             font-weight: 700;
-            font-size: 1.4rem;
-            margin-bottom: 6px;
+            font-size: 1.3rem;
             letter-spacing: -0.01em;
-        }
-
-        .popup-text {
-            color: #ffffff;
-            font-size: 1.05rem;
-            opacity: 0.95;
-            font-weight: 400;
             line-height: 1.4;
         }
 
@@ -102,6 +94,7 @@
             inset: 0;
             z-index: 1;
             overflow: hidden;
+            pointer-events: none;
         }
 
         .sq {
@@ -134,35 +127,34 @@
 
         /* --- HEADER AREA --- */
         .top-header {
-            position: absolute;
-            top: 0;
-            left: 0;
+            position: relative;
             width: 100%;
             padding: 30px 10%;
             display: flex;
             justify-content: flex-end;
-            z-index: 20;
+            z-index: 30; /* Über das Vignette-Overlay gelegt */
         }
 
         .support-btn {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(4, 14, 9, 0.4);
+            background: rgba(4, 14, 9, 0.6);
             color: #a0f0c8;
-            border: 1px solid rgba(0, 255, 136, 0.15);
+            border: 1px solid rgba(0, 255, 136, 0.25);
             font-size: 0.95rem;
             font-weight: 500;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 10px;
             text-decoration: none;
             cursor: pointer;
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .support-btn:hover {
-            background: rgba(0, 255, 136, 0.1);
+            background: rgba(0, 255, 136, 0.15);
             color: #00ff88;
             border-color: #00ff88;
             box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
@@ -181,7 +173,7 @@
 
         .title {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: clamp(4rem, 8vw, 8rem);
+            font-size: clamp(3.5rem, 8vw, 8rem);
             line-height: 0.95;
             font-weight: 700;
             letter-spacing: -0.04em;
@@ -193,7 +185,7 @@
         }
 
         .subtitle {
-            font-size: 1.35rem;
+            font-size: clamp(1.1rem, 2vw, 1.35rem);
             font-weight: 300;
             color: #a0f0c8;
             max-width: 540px;
@@ -380,15 +372,62 @@
             font-weight: 600;
         }
 
+        /* --- VOLLE HANDY OPTIMIERUNG (RESPONSIVE) --- */
         @media (max-width: 900px) {
-            #info-popup { min-width: 85%; padding: 20px; }
-            .top-header { padding: 20px 6%; }
-            .bottom-bar { flex-direction: column; align-items: flex-start; padding: 30px 6% 40px 6%; gap: 24px; }
-            .footer-left { flex-direction: column; align-items: flex-start; width: 100%; gap: 20px; }
-            .buttons-group { width: 100%; flex-direction: column; }
-            .download-btn, .versions-btn { width: 100%; justify-content: center; }
-            .versions-dropdown { width: 100%; }
-            .branding { text-align: left; width: 100%; border-top: 1px solid rgba(0, 255, 136, 0.05); padding-top: 16px; }
+            .top-header { 
+                padding: 20px 6%; 
+            }
+            
+            .support-btn {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+
+            .main-content {
+                padding: 40px 6% 20px 6%;
+                justify-content: center;
+            }
+            
+            .bottom-bar { 
+                flex-direction: column-reverse; 
+                align-items: center; 
+                padding: 20px 6% 30px 6%; 
+                gap: 24px; 
+            }
+            
+            .footer-left { 
+                flex-direction: column; 
+                align-items: center; 
+                width: 100%; 
+                gap: 16px; 
+            }
+            
+            .buttons-group { 
+                width: 100%; 
+                flex-direction: column; 
+            }
+            
+            .download-btn, .versions-btn { 
+                width: 100%; 
+                justify-content: center; 
+            }
+            
+            .versions-dropdown { 
+                width: 100%; 
+            }
+            
+            .apk-info {
+                text-align: center;
+            }
+            
+            .branding { 
+                text-align: center; 
+                width: 100%; 
+                border-bottom: 1px solid rgba(0, 255, 136, 0.1); 
+                padding-bottom: 16px; 
+                margin-bottom: 4px;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
@@ -399,8 +438,7 @@
     </div>
 
     <div id="info-popup">
-        <div class="popup-title">Newest Release mit den Namen</div>
-        <div class="popup-text" id="popup-filename">Searching version...</div>
+        <div class="popup-title" id="popup-text-content">Searching latest version...</div>
     </div>
 
     <div class="bg-container" id="squares-container"></div>
@@ -517,7 +555,7 @@
         const mainApkDetails = document.getElementById('main-apk-details');
         const versionsMenu = document.getElementById('versions-menu');
         const versionsToggleBtn = document.getElementById('versions-toggle-btn');
-        const popupFilename = document.getElementById('popup-filename');
+        const popupTextContent = document.getElementById('popup-text-content');
 
         if (apkFiles.length > 0) {
             const latestApk = apkFiles[0];
@@ -528,8 +566,7 @@
             mainApkTitle.textContent = formatCleanName(latestApk);
             mainApkDetails.textContent = `Latest Version v${latestVersion} • Stable`;
             
-            // Set dynamic filename in popup
-            popupFilename.textContent = latestApk;
+            popupTextContent.innerHTML = `Newest Release <span style="color:#ffffff;">${latestApk}</span>`;
 
             const currentItem = document.createElement('a');
             currentItem.href = latestApk;
@@ -577,16 +614,13 @@
             const loader = document.getElementById('loader');
             const popup = document.getElementById('info-popup');
 
-            // Set loading screen duration to 3000ms (3 seconds)
             setTimeout(() => {
                 loader.style.opacity = '0';
                 loader.style.visibility = 'hidden';
 
-                // Popup flies in smoothly 400ms after loader fade-out begins
                 setTimeout(() => {
                     popup.classList.add('show');
                     
-                    // Display popup for 5 seconds before disappearing
                     setTimeout(() => {
                         popup.classList.add('fade-out');
                         setTimeout(() => {
@@ -663,6 +697,14 @@
         document.addEventListener('mousemove', (e) => {
             targetMouseX = e.clientX;
             targetMouseY = e.clientY;
+        });
+
+        // Touch-Support für Smartphones hinzugefügt
+        document.addEventListener('touchmove', (e) => {
+            if(e.touches.length > 0) {
+                targetMouseX = e.touches[0].clientX;
+                targetMouseY = e.touches[0].clientY;
+            }
         });
 
         function animateInteractivity() {
