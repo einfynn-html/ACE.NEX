@@ -60,6 +60,43 @@
             pointer-events: none;
         }
 
+        /* --- HEADER BEREICH (SUPPORT BUTTON) --- */
+        .top-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 30px 10%;
+            display: flex;
+            justify-content: flex-end;
+            z-index: 20;
+        }
+
+        .support-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(4, 14, 9, 0.4);
+            color: #a0f0c8;
+            border: 1px solid rgba(0, 255, 136, 0.15);
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .support-btn:hover {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            border-color: #00ff88;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
+            transform: translateY(-2px);
+        }
+
         /* --- HAUPTINHALT --- */
         .main-content {
             flex-grow: 1;
@@ -215,20 +252,6 @@
             background: rgba(0, 255, 136, 0.18);
         }
 
-        .dropdown-item-content {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .download-count {
-            font-size: 0.75rem;
-            color: #628a73;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
         .dropdown-section-title {
             font-size: 0.75rem;
             text-transform: uppercase;
@@ -286,6 +309,9 @@
         }
 
         @media (max-width: 900px) {
+            .top-header {
+                padding: 20px 6%;
+            }
             .bottom-bar {
                 flex-direction: column;
                 align-items: flex-start;
@@ -309,6 +335,16 @@
 
     <div class="bg-container" id="squares-container"></div>
     <div class="bg-vignette"></div>
+
+    <header class="top-header">
+        <a href="mailto:support.einfynn@gmail.com" class="support-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            Support
+        </a>
+    </header>
 
     <main class="main-content">
         <h1 class="title">ACE<br>LAUNCHER</h1>
@@ -370,17 +406,9 @@
              "ACE Launcher 1.0.0.14.apk"
         ];
 
-        // Eindeutiger Namespace für deine App auf dem globalen Zähl-Server
-        const API_BASE = "https://api.counterapi.dev/v1/ace_launcher_global_clicks_prod";
-
         function extractVersion(filename) {
             const match = filename.match(/(\d+\.\d+\.\d+\.\d+|\d+\.\d+\.\d+)/);
             return match ? match[0] : "0.0.0";
-        }
-
-        function getCounterKey(filename) {
-            // Wandelt z.B. "1.0.0.38" in "1_0_0_38" um, damit die API-URL sauber bleibt
-            return extractVersion(filename).replace(/\./g, '_');
         }
 
         function formatCleanName(filename) {
@@ -400,35 +428,6 @@
             return 0;
         }
 
-        // --- GLOBAL LIVE COUNTER LOGIC ---
-        async function fetchGlobalCount(apkName, index) {
-            const key = getCounterKey(apkName);
-            const baseCount = (apkFiles.length - index) * 412 + 105; // Schöner Start-Basiswert
-            
-            try {
-                const response = await fetch(`${API_BASE}/${key}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    const liveClicks = data.value !== undefined ? data.value : (data.count || 0);
-                    return baseCount + liveClicks;
-                }
-            } catch (e) {
-                console.error("Fehler beim Abrufen des globalen Counters:", e);
-            }
-            return baseCount; // Fallback, falls die API offline ist oder blockiert wird
-        }
-
-        async function incrementGlobalCount(apkName) {
-            const key = getCounterKey(apkName);
-            try {
-                await fetch(`${API_BASE}/${key}/up`);
-            } catch (e) {
-                console.error("Fehler beim Erhöhen des globalen Counters:", e);
-            }
-            // Interface nach Klick direkt aktualisieren
-            updateAllCounters();
-        }
-
         apkFiles.sort(sortApks);
 
         const mainDownloadBtn = document.getElementById('main-download-btn');
@@ -437,40 +436,23 @@
         const versionsMenu = document.getElementById('versions-menu');
         const versionsToggleBtn = document.getElementById('versions-toggle-btn');
 
-        function renderInterface() {
-            if (apkFiles.length === 0) return;
-
-            versionsMenu.innerHTML = ''; 
-
+        if (apkFiles.length > 0) {
             const latestApk = apkFiles[0];
             const latestVersion = extractVersion(latestApk);
 
             mainDownloadBtn.href = latestApk;
             mainDownloadBtn.setAttribute('download', latestApk);
             mainApkTitle.textContent = formatCleanName(latestApk);
-            mainApkDetails.textContent = `Aktuellste Version v${latestVersion} • Stabil (Lädt...)`;
+            mainApkDetails.textContent = `Aktuellste Version v${latestVersion} • Stabil`;
 
-            if (!mainDownloadBtn.dataset.hasListener) {
-                mainDownloadBtn.addEventListener('click', () => incrementGlobalCount(latestApk));
-                mainDownloadBtn.dataset.hasListener = "true";
-            }
-
-            // Empfohlen-Eintrag im Dropdown
             const currentItem = document.createElement('a');
             currentItem.href = latestApk;
             currentItem.setAttribute('download', latestApk);
             currentItem.classList.add('dropdown-item', 'current-highlight');
             currentItem.innerHTML = `
-                <div class="dropdown-item-content">
-                    <span style="font-weight: 600; color: #00ff88;">Empfohlen (v${latestVersion})</span>
-                    <span class="download-count">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        <span id="global-count-latest">...</span> Mal geladen
-                    </span>
-                </div>
+                <span style="font-weight: 600; color: #00ff88;">Empfohlen (v${latestVersion})</span>
                 <span class="latest-badge">Aktiv</span>
             `;
-            currentItem.addEventListener('click', () => incrementGlobalCount(latestApk));
             versionsMenu.appendChild(currentItem);
 
             const sectionTitle = document.createElement('div');
@@ -478,52 +460,20 @@
             sectionTitle.textContent = "Versionsverlauf";
             versionsMenu.appendChild(sectionTitle);
 
-            // Alle Versionen generieren
             apkFiles.forEach((apk, index) => {
                 const versionNum = extractVersion(apk);
                 const item = document.createElement('a');
-                const key = getCounterKey(apk);
-
                 item.href = apk;
                 item.setAttribute('download', apk);
                 item.classList.add('dropdown-item');
                 
                 item.innerHTML = `
-                    <div class="dropdown-item-content">
-                        <span>Version ${versionNum}</span>
-                        <span class="download-count">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            <span id="global-count-${key}">...</span> Downloads
-                        </span>
-                    </div>
+                    <span>Version ${versionNum}</span>
                     ${index === 0 ? '<span style="color: #00ff88; font-size:0.85rem; font-weight:600;">Neu</span>' : '<span style="opacity:0.4; font-size:0.85rem;">APK</span>'}
                 `;
-                item.addEventListener('click', () => incrementGlobalCount(apk));
                 versionsMenu.appendChild(item);
             });
-
-            // Live-Zahlen asynchron nachladen
-            updateAllCounters();
         }
-
-        async function updateAllCounters() {
-            apkFiles.forEach(async (apk, index) => {
-                const count = await fetchGlobalCount(apk, index);
-                const formattedCount = count.toLocaleString('de-DE');
-                const key = getCounterKey(apk);
-
-                const el = document.getElementById(`global-count-${key}`);
-                if (el) el.textContent = formattedCount;
-
-                if (index === 0) {
-                    const mainEl = document.getElementById('global-count-latest');
-                    if (mainEl) mainEl.textContent = formattedCount;
-                    mainApkDetails.textContent = `Aktuellste Version v${extractVersion(apk)} • Stabil (${formattedCount} Downloads)`;
-                }
-            });
-        }
-
-        renderInterface();
 
         versionsToggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
