@@ -24,60 +24,84 @@
             overflow: hidden;
         }
 
-        /* --- LOADING SCREEN (PRELOADER) --- */
+        /* --- MODERNIZED LOADING SCREEN (PRELOADER) --- */
         #loader {
             position: fixed;
             inset: 0;
-            background: #020503;
+            background: radial-gradient(circle at center, #041409 0%, #020503 100%);
             z-index: 9999;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            transition: opacity 0.5s ease, visibility 0.5s;
-            gap: 20px;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
+            gap: 24px;
         }
 
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(0, 255, 136, 0.1);
-            border-radius: 50%;
-            border-top-color: #00ff88;
-            animation: spin 1s linear infinite;
+        /* Modern Progress Bar instead of old spinner */
+        .loader-bar-container {
+            width: 240px;
+            height: 4px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.05);
+        }
+
+        .loader-bar-progress {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00e67a);
+            border-radius: 10px;
+            transform: translateX(-100%);
+            animation: loadProgress 2.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            box-shadow: 0 0 12px #00ff88;
         }
 
         .loader-text {
             font-family: 'Space Grotesk', sans-serif;
-            color: #a0f0c8;
-            font-size: 1rem;
-            letter-spacing: 0.1em;
+            color: #00ff88;
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.2em;
             text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+            animation: pulseText 1.5s ease-in-out infinite;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        @keyframes loadProgress {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(-40%); }
+            100% { transform: translateX(0%); }
         }
 
-        /* --- INFO POPUP --- */
+        @keyframes pulseText {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        /* --- LARGER & MODERN INFO POPUP --- */
         #info-popup {
             position: fixed;
-            top: 30px;
+            top: 40px;
             left: 50%;
             transform: translateX(-50%) translateY(-20px);
-            background: rgba(4, 14, 9, 0.9);
-            border: 1px solid rgba(0, 255, 136, 0.3);
-            backdrop-filter: blur(15px);
-            padding: 16px 28px;
-            border-radius: 12px;
+            background: rgba(4, 18, 11, 0.85);
+            border: 2px solid rgba(0, 255, 136, 0.4);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            padding: 22px 40px;
+            border-radius: 18px;
             z-index: 1000;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 255, 136, 0.1);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 255, 136, 0.15);
             opacity: 0;
             visibility: hidden;
-            transition: transform 2s cubic-bezier(0.4, 0, 0.2, 1), opacity 2s ease;
-            pointer-events: none; /* Prevents interaction/clicks */
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease;
+            pointer-events: none;
             text-align: center;
             max-width: 90%;
+            min-width: 380px;
         }
 
         #info-popup.show {
@@ -88,22 +112,25 @@
 
         #info-popup.fade-out {
             opacity: 0;
-            transform: translateX(-50%) translateY(-20px);
-            transition: all 0.5s ease;
+            transform: translateX(-50%) translateY(-30px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 1, 1);
         }
 
         .popup-title {
             font-family: 'Space Grotesk', sans-serif;
             color: #00ff88;
             font-weight: 700;
-            font-size: 1.1rem;
-            margin-bottom: 4px;
+            font-size: 1.4rem;
+            margin-bottom: 6px;
+            letter-spacing: -0.01em;
         }
 
         .popup-text {
             color: #ffffff;
-            font-size: 0.95rem;
-            opacity: 0.9;
+            font-size: 1.05rem;
+            opacity: 0.95;
+            font-weight: 400;
+            line-height: 1.4;
         }
 
         /* --- BACKGROUND CONTAINER --- */
@@ -142,7 +169,7 @@
             pointer-events: none;
         }
 
-        /* --- HEADER AREA (SUPPORT BUTTON) --- */
+        /* --- HEADER AREA --- */
         .top-header {
             position: absolute;
             top: 0;
@@ -391,21 +418,10 @@
         }
 
         @media (max-width: 900px) {
-            .top-header {
-                padding: 20px 6%;
-            }
-            .bottom-bar {
-                flex-direction: column;
-                align-items: flex-start;
-                padding: 30px 6% 40px 6%;
-                gap: 24px;
-            }
-            .footer-left {
-                flex-direction: column;
-                align-items: flex-start;
-                width: 100%;
-                gap: 20px;
-            }
+            #info-popup { min-width: 85%; padding: 20px; }
+            .top-header { padding: 20px 6%; }
+            .bottom-bar { flex-direction: column; align-items: flex-start; padding: 30px 6% 40px 6%; gap: 24px; }
+            .footer-left { flex-direction: column; align-items: flex-start; width: 100%; gap: 20px; }
             .buttons-group { width: 100%; flex-direction: column; }
             .download-btn, .versions-btn { width: 100%; justify-content: center; }
             .versions-dropdown { width: 100%; }
@@ -416,12 +432,14 @@
 <body>
 
     <div id="loader">
-        <div class="spinner"></div>
-        <div class="loader-text">Loading ACE Launcher...</div>
+        <div class="loader-text">Loading ACE Launcher</div>
+        <div class="loader-bar-container">
+            <div class="loader-bar-progress"></div>
+        </div>
     </div>
 
     <div id="info-popup">
-        <div class="popup-title">Latest build available</div>
+        <div class="popup-title">Newest Release mit den Namen</div>
         <div class="popup-text" id="popup-filename">Searching version...</div>
     </div>
 
@@ -550,7 +568,7 @@
             mainApkTitle.textContent = formatCleanName(latestApk);
             mainApkDetails.textContent = `Latest Version v${latestVersion} • Stable`;
             
-            // Set file name in popup
+            // Set dynamic filename in popup
             popupFilename.textContent = latestApk;
 
             const currentItem = document.createElement('a');
@@ -593,29 +611,32 @@
         });
 
         /* ==========================================
-           2. LOADER & POPUP MANAGEMENT
+           2. MODERNIZED TIMER MANAGEMENT (LOADER & POPUP)
            ========================================== */
         window.addEventListener('load', () => {
             const loader = document.getElementById('loader');
             const popup = document.getElementById('info-popup');
 
-            // 1. Hide loading screen
-            loader.style.opacity = '0';
-            loader.style.visibility = 'hidden';
-
-            // 2. Trigger info popup after loading
+            // Set loading screen duration to 3000ms (3 seconds)
             setTimeout(() => {
-                popup.classList.add('show'); // Uses 2 seconds for transition (CSS)
-                
-                // 3. Hide again after 5 seconds total
-                setTimeout(() => {
-                    popup.classList.add('fade-out');
-                    setTimeout(() => {
-                        popup.classList.remove('show', 'fade-out');
-                    }, 500); // Waits for the fast fade-out animation to end
-                }, 5000);
+                loader.style.opacity = '0';
+                loader.style.visibility = 'hidden';
 
-            }, 200); // Small delay after loader disappears
+                // Popup flies in smoothly 400ms after loader fade-out begins
+                setTimeout(() => {
+                    popup.classList.add('show');
+                    
+                    // Display popup for 5 seconds before disappearing
+                    setTimeout(() => {
+                        popup.classList.add('fade-out');
+                        setTimeout(() => {
+                            popup.classList.remove('show', 'fade-out');
+                        }, 500); 
+                    }, 5000);
+
+                }, 400); 
+
+            }, 3000); 
         });
 
         /* ==========================================
