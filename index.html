@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ACE Launcher - Download</title>
+    <title>ACE Launcher — Evolution für dein Android</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;700&display=swap');
 
         * { 
             margin: 0; 
@@ -38,11 +38,9 @@
             mix-blend-mode: screen;
             pointer-events: none;
             animation: floatAround infinite ease-in-out;
-            /* Neu: Weicher Übergang für den Leucht-Effekt */
             transition: filter 0.4s ease-out;
         }
 
-        /* Neu: --ix und --iy (Interactive X/Y) wurden zu den Keyframes hinzugefügt */
         @keyframes floatAround {
             0%, 100% {
                 transform: translate(var(--ix, 0px), var(--iy, 0px)) rotate(0deg) scale(1);
@@ -81,16 +79,16 @@
             background: linear-gradient(135deg, #ffffff 30%, #a0f0c8 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             text-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
 
         .subtitle {
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             font-weight: 300;
             color: #a0f0c8;
-            max-width: 500px;
-            line-height: 1.5;
+            max-width: 540px;
+            line-height: 1.6;
             opacity: 0.9;
             text-shadow: 0 4px 14px rgba(0,0,0,0.6);
         }
@@ -101,10 +99,16 @@
             padding: 40px 10%;
             display: flex;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: space-between;
             gap: 24px;
             z-index: 10;
-            background: linear-gradient(to top, #020503 60%, transparent 100%);
+            background: linear-gradient(to top, #020503 70%, transparent 100%);
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
         }
 
         .buttons-group {
@@ -119,18 +123,18 @@
             gap: 12px;
             background: linear-gradient(135deg, #00ff88 0%, #00e67a 100%);
             color: #020503;
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            padding: 18px 40px;
+            padding: 16px 36px;
             border-radius: 14px;
             text-decoration: none;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 8px 30px rgba(0, 255, 136, 0.3);
+            box-shadow: 0 8px 30px rgba(0, 255, 136, 0.25);
         }
 
         .download-btn:hover {
             transform: translateY(-4px);
-            box-shadow: 0 15px 40px rgba(0, 255, 136, 0.5);
+            box-shadow: 0 15px 40px rgba(0, 255, 136, 0.45);
         }
 
         .versions-btn {
@@ -140,9 +144,9 @@
             background: rgba(4, 14, 9, 0.6);
             color: #00ff88;
             border: 1px solid rgba(0, 255, 136, 0.25);
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            padding: 18px 24px;
+            padding: 16px 24px;
             border-radius: 14px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -152,7 +156,7 @@
         .versions-btn:hover {
             background: rgba(0, 255, 136, 0.1);
             border-color: #00ff88;
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.15);
         }
 
         .versions-dropdown {
@@ -240,28 +244,50 @@
 
         .apk-name {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.2rem;
+            font-size: 1.15rem;
             color: #ffffff;
             font-weight: 700;
             letter-spacing: 0.01em;
         }
 
         .apk-meta {
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             color: #628a73;
         }
 
-        @media (max-width: 768px) {
-            .main-content { padding: 0 6%; }
+        /* --- BRANDING BEREICH --- */
+        .branding {
+            text-align: right;
+            font-size: 0.85rem;
+            color: rgba(160, 240, 200, 0.5);
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            line-height: 1.4;
+        }
+
+        .branding span {
+            font-family: 'Space Grotesk', sans-serif;
+            color: rgba(0, 255, 136, 0.8);
+            font-weight: 600;
+        }
+
+        @media (max-width: 900px) {
             .bottom-bar {
                 flex-direction: column;
                 align-items: flex-start;
                 padding: 30px 6% 40px 6%;
-                gap: 16px;
+                gap: 24px;
+            }
+            .footer-left {
+                flex-direction: column;
+                align-items: flex-start;
+                width: 100%;
+                gap: 20px;
             }
             .buttons-group { width: 100%; flex-direction: column; }
             .download-btn, .versions-btn { width: 100%; justify-content: center; }
             .versions-dropdown { width: 100%; }
+            .branding { text-align: left; width: 100%; border-top: 1px solid rgba(0, 255, 136, 0.05); padding-top: 16px; }
         }
     </style>
 </head>
@@ -272,35 +298,41 @@
 
     <main class="main-content">
         <h1 class="title">ACE<br>LAUNCHER</h1>
-        <p class="subtitle">Der moderne Android Dashboard Launcher. Minimalistisch, performant und intelligent strukturiert.</p>
+        <p class="subtitle">Das intelligente Dashboard-Erlebnis für dein Android-Smartphone. Minimalistisch im Design.</p>
     </main>
 
     <footer class="bottom-bar">
-        <div class="buttons-group">
-            <a href="#" id="main-download-btn" class="download-btn">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                Jetzt herunterladen
-            </a>
-            
-            <button class="versions-btn" id="versions-toggle-btn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="4" y1="6" x2="20" y2="6"></line>
-                    <line x1="4" y1="12" x2="20" y2="12"></line>
-                    <line x1="4" y1="18" x2="20" y2="18"></line>
-                </svg>
-                Versionen
-            </button>
+        <div class="footer-left">
+            <div class="buttons-group">
+                <a href="#" id="main-download-btn" class="download-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download starten
+                </a>
+                
+                <button class="versions-btn" id="versions-toggle-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="4" y1="6" x2="20" y2="6"></line>
+                        <line x1="4" y1="12" x2="20" y2="12"></line>
+                        <line x1="4" y1="18" x2="20" y2="18"></line>
+                    </svg>
+                    Builds
+                </button>
 
-            <div class="versions-dropdown" id="versions-menu"></div>
+                <div class="versions-dropdown" id="versions-menu"></div>
+            </div>
+            
+            <div class="apk-info" id="main-apk-info">
+                <span class="apk-name" id="main-apk-title">Analysiere Archiv...</span>
+                <span class="apk-meta" id="main-apk-details">Suche nach verfügbaren Builds...</span>
+            </div>
         </div>
-        
-        <div class="apk-info" id="main-apk-info">
-            <span class="apk-name" id="main-apk-title">Lade...</span>
-            <span class="apk-meta" id="main-apk-details">Suche Versionen...</span>
+
+        <div class="branding">
+            Sicherheitshinweis:<br>Lade den ACE Launcher <span>ausschließlich über diese Website</span> herunter.
         </div>
     </footer>
 
@@ -310,29 +342,18 @@
            ========================================== */
         
         const apkFiles = [
-             "ACE Launcher 1.0.0.38.apk",
-             "ACE Launcher 1.0.0.37.apk",
-             "ACE Launcher 1.0.0.36.apk",
-             "ACE Launcher 1.0.0.35.apk",
-             "ACE Launcher 1.0.0.34.apk",
-             "ACE Launcher 1.0.0.33.apk",
-             "ACE Launcher 1.0.0.30.apk",
-             "ACE Launcher 1.0.0.29.apk",
-             "ACE Launcher 1.0.0.28.apk",
-             "ACE Launcher 1.0.0.27.apk",
-             "ACE Launcher 1.0.0.26.apk",
-             "ACE Launcher 1.0.0.25.apk",
-             "ACE Launcher 1.0.0.24.apk",
-             "ACE Launcher 1.0.0.23.apk",
-             "ACE Launcher 1.0.0.22.apk",
-             "ACE Launcher 1.0.0.21.apk",
-             "ACE Launcher 1.0.0.20.apk",
-             "ACE Launcher 1.0.0.19.apk",
-             "ACE Launcher 1.0.0.18.apk",
-             "ACE Launcher 1.0.0.17.apk",
-             "ACE Launcher 1.0.0.16.apk",
-             "ACE Launcher 1.0.0.15.apk",
-             "ACE Launcher 1.0.0.14.apk",
+             "ACE Launcher 1.0.0.38.apk", "ACE Launcher 1.0.0.37.apk",
+             "ACE Launcher 1.0.0.36.apk", "ACE Launcher 1.0.0.35.apk",
+             "ACE Launcher 1.0.0.34.apk", "ACE Launcher 1.0.0.33.apk",
+             "ACE Launcher 1.0.0.30.apk", "ACE Launcher 1.0.0.29.apk",
+             "ACE Launcher 1.0.0.28.apk", "ACE Launcher 1.0.0.27.apk",
+             "ACE Launcher 1.0.0.26.apk", "ACE Launcher 1.0.0.25.apk",
+             "ACE Launcher 1.0.0.24.apk", "ACE Launcher 1.0.0.23.apk",
+             "ACE Launcher 1.0.0.22.apk", "ACE Launcher 1.0.0.21.apk",
+             "ACE Launcher 1.0.0.20.apk", "ACE Launcher 1.0.0.19.apk",
+             "ACE Launcher 1.0.0.18.apk", "ACE Launcher 1.0.0.17.apk",
+             "ACE Launcher 1.0.0.16.apk", "ACE Launcher 1.0.0.15.apk",
+             "ACE Launcher 1.0.0.14.apk"
         ];
 
         function extractVersion(filename) {
@@ -372,21 +393,21 @@
             mainDownloadBtn.href = latestApk;
             mainDownloadBtn.setAttribute('download', latestApk);
             mainApkTitle.textContent = formatCleanName(latestApk);
-            mainApkDetails.textContent = `Neueste Version ${latestVersion} • APK-Datei`;
+            mainApkDetails.textContent = `Aktuellste Version v${latestVersion} • Stabil`;
 
             const currentItem = document.createElement('a');
             currentItem.href = latestApk;
             currentItem.setAttribute('download', latestApk);
             currentItem.classList.add('dropdown-item', 'current-highlight');
             currentItem.innerHTML = `
-                <span style="font-weight: 600; color: #00ff88;">Current (v${latestVersion})</span>
+                <span style="font-weight: 600; color: #00ff88;">Empfohlen (v${latestVersion})</span>
                 <span class="latest-badge">Aktiv</span>
             `;
             versionsMenu.appendChild(currentItem);
 
             const sectionTitle = document.createElement('div');
             sectionTitle.classList.add('dropdown-section-title');
-            sectionTitle.textContent = "Alle Versionen";
+            sectionTitle.textContent = "Versionsverlauf";
             versionsMenu.appendChild(sectionTitle);
 
             apkFiles.forEach((apk, index) => {
@@ -397,8 +418,8 @@
                 item.classList.add('dropdown-item');
                 
                 item.innerHTML = `
-                    <span>v${versionNum}</span>
-                    ${index === 0 ? '<span style="color: #00ff88; font-size:0.85rem; font-weight:600;">Neueste</span>' : '<span style="opacity:0.4; font-size:0.85rem;">APK</span>'}
+                    <span>Version ${versionNum}</span>
+                    ${index === 0 ? '<span style="color: #00ff88; font-size:0.85rem; font-weight:600;">Neu</span>' : '<span style="opacity:0.4; font-size:0.85rem;">APK</span>'}
                 `;
                 versionsMenu.appendChild(item);
             });
@@ -420,8 +441,6 @@
         const greenColors = ['#04120a', '#0a2413', '#11351c', '#1b4d2a', '#286e3d', '#3d9c5b', '#00ff88'];
         const purpleColors = ['#2b061a', '#4a0a2c', '#1c051a'];
         const totalSquares = 130;
-        
-        // Neu: Array zum Speichern der Daten für die Interaktivität
         const squaresData = [];
 
         for (let i = 0; i < totalSquares; i++) {
@@ -460,32 +479,28 @@
 
             container.appendChild(square);
             
-            // Neu: Speichere Basisdaten für Maus-Interaktionen
             squaresData.push({
                 el: square,
                 x: posX,
                 y: posY,
                 size: size,
-                depth: Math.random() * 1.5 + 0.5, // Bestimmt wie stark der Parallax-Effekt ist
+                depth: Math.random() * 1.5 + 0.5,
                 currentIx: 0,
                 currentIy: 0
             });
         }
 
-        /* --- NEU: MAUS-INTERAKTION (Parallax & Repulsion) --- */
         let mouseX = window.innerWidth / 2;
         let mouseY = window.innerHeight / 2;
         let targetMouseX = mouseX;
         let targetMouseY = mouseY;
 
-        // Aktualisiere Zielkoordinaten bei Mausbewegung
         document.addEventListener('mousemove', (e) => {
             targetMouseX = e.clientX;
             targetMouseY = e.clientY;
         });
 
         function animateInteractivity() {
-            // Weiche Annäherung der aktuellen Koordinaten an die Zielkoordinaten
             mouseX += (targetMouseX - mouseX) * 0.1;
             mouseY += (targetMouseY - mouseY) * 0.1;
 
@@ -493,7 +508,6 @@
             const winH = window.innerHeight;
 
             squaresData.forEach(data => {
-                // Ermittle das ungefähre Zentrum des Quadrats in Pixeln
                 const sqCenterX = (data.x / 100) * winW + (data.size / 2);
                 const sqCenterY = (data.y / 100) * winH + (data.size / 2);
 
@@ -501,18 +515,15 @@
                 const dy = mouseY - sqCenterY;
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
-                // 1. Repulsion (Quadrate weichen aus und leuchten)
                 let repelX = 0;
                 let repelY = 0;
                 const repelRadius = 180;
 
                 if (dist < repelRadius) {
                     const force = (repelRadius - dist) / repelRadius;
-                    // Drückt das Quadrat weg
                     repelX = -(dx / dist) * force * 50;
                     repelY = -(dy / dist) * force * 50;
                     
-                    // Lässt das Quadrat leicht aufleuchten
                     data.el.style.filter = `brightness(1.6) drop-shadow(0 0 10px ${data.el.style.backgroundColor})`;
                     data.el.style.zIndex = "10";
                 } else {
@@ -520,19 +531,15 @@
                     data.el.style.zIndex = "1";
                 }
 
-                // 2. Parallax (Bewegung relativ zur Bildschirmmitte basierend auf Tiefe)
                 const parallaxX = ((mouseX / winW) - 0.5) * -60 * data.depth;
                 const parallaxY = ((mouseY / winH) - 0.5) * -60 * data.depth;
 
-                // Zielposition kombinieren
                 const targetIx = parallaxX + repelX;
                 const targetIy = parallaxY + repelY;
 
-                // Sanft zur Zielposition animieren
                 data.currentIx += (targetIx - data.currentIx) * 0.15;
                 data.currentIy += (targetIy - data.currentIy) * 0.15;
 
-                // CSS Variablen übergeben (diese werden im @keyframes genutzt)
                 data.el.style.setProperty('--ix', `${data.currentIx}px`);
                 data.el.style.setProperty('--iy', `${data.currentIy}px`);
             });
@@ -540,7 +547,6 @@
             requestAnimationFrame(animateInteractivity);
         }
         
-        // Starte die Animations-Schleife
         animateInteractivity();
     </script>
 </body>
