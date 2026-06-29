@@ -370,9 +370,17 @@
              "ACE Launcher 1.0.0.14.apk"
         ];
 
+        // Eindeutiger Namespace für deine App auf dem globalen Zähl-Server
+        const API_BASE = "https://api.counterapi.dev/v1/ace_launcher_global_clicks_prod";
+
         function extractVersion(filename) {
             const match = filename.match(/(\d+\.\d+\.\d+\.\d+|\d+\.\d+\.\d+)/);
             return match ? match[0] : "0.0.0";
+        }
+
+        function getCounterKey(filename) {
+            // Wandelt z.B. "1.0.0.38" in "1_0_0_38" um, damit die API-URL sauber bleibt
+            return extractVersion(filename).replace(/\./g, '_');
         }
 
         function formatCleanName(filename) {
@@ -392,13 +400,33 @@
             return 0;
         }
 
-        // --- HILFSFUNKTION FÜR SIMULIERTE DOWNLOADZAHLEN ---
-        // (Für echte Zahlen müsste hier eine API-Anfrage an deinen Server erfolgen)
-        function getSimulatedDownloads(index, totalFiles) {
-            // Ältere Versionen (höherer Index) haben mehr Downloads
-            const baseDownloads = (totalFiles - index) * 1450;
-            const randomVariance = Math.floor(Math.random() * 500);
-            return (baseDownloads + randomVariance).toLocaleString('de-DE');
+        // --- GLOBAL LIVE COUNTER LOGIC ---
+        async function fetchGlobalCount(apkName, index) {
+            const key = getCounterKey(apkName);
+            const baseCount = (apkFiles.length - index) * 412 + 105; // Schöner Start-Basiswert
+            
+            try {
+                const response = await fetch(`${API_BASE}/${key}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const liveClicks = data.value !== undefined ? data.value : (data.count || 0);
+                    return baseCount + liveClicks;
+                }
+            } catch (e) {
+                console.error("Fehler beim Abrufen des globalen Counters:", e);
+            }
+            return baseCount; // Fallback, falls die API offline ist oder blockiert wird
+        }
+
+        async function incrementGlobalCount(apkName) {
+            const key = getCounterKey(apkName);
+            try {
+                await fetch(`${API_BASE}/${key}/up`);
+            } catch (e) {
+                console.error("Fehler beim Erhöhen des globalen Counters:", e);
+            }
+            // Interface nach Klick direkt aktualisieren
+            updateAllCounters();
         }
 
         apkFiles.sort(sortApks);
@@ -409,16 +437,25 @@
         const versionsMenu = document.getElementById('versions-menu');
         const versionsToggleBtn = document.getElementById('versions-toggle-btn');
 
-        if (apkFiles.length > 0) {
+        function renderInterface() {
+            if (apkFiles.length === 0) return;
+
+            versionsMenu.innerHTML = ''; 
+
             const latestApk = apkFiles[0];
             const latestVersion = extractVersion(latestApk);
-            const latestDownloads = getSimulatedDownloads(0, apkFiles.length);
 
             mainDownloadBtn.href = latestApk;
             mainDownloadBtn.setAttribute('download', latestApk);
             mainApkTitle.textContent = formatCleanName(latestApk);
-            mainApkDetails.textContent = `Aktuellste Version v${latestVersion} • Stabil`;
+            mainApkDetails.textContent = `Aktuellste Version v${latestVersion} • Stabil (Lädt...)`;
 
+            if (!mainDownloadBtn.dataset.hasListener) {
+                mainDownloadBtn.addEventListener('click', () => incrementGlobalCount(latestApk));
+                mainDownloadBtn.dataset.hasListener = "true";
+            }
+
+            // Empfohlen-Eintrag im Dropdown
             const currentItem = document.createElement('a');
             currentItem.href = latestApk;
             currentItem.setAttribute('download', latestApk);
@@ -428,11 +465,12 @@
                     <span style="font-weight: 600; color: #00ff88;">Empfohlen (v${latestVersion})</span>
                     <span class="download-count">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                        ${latestDownloads} Mal geladen
+                        <span id="global-count-latest">...</span> Mal geladen
                     </span>
                 </div>
                 <span class="latest-badge">Aktiv</span>
             `;
+            currentItem.addEventListener('click', () => incrementGlobalCount(latestApk));
             versionsMenu.appendChild(currentItem);
 
             const sectionTitle = document.createElement('div');
@@ -440,10 +478,11 @@
             sectionTitle.textContent = "Versionsverlauf";
             versionsMenu.appendChild(sectionTitle);
 
+            // Alle Versionen generieren
             apkFiles.forEach((apk, index) => {
                 const versionNum = extractVersion(apk);
                 const item = document.createElement('a');
-                const downloadCount = getSimulatedDownloads(index, apkFiles.length);
+                const key = getCounterKey(apk);
 
                 item.href = apk;
                 item.setAttribute('download', apk);
@@ -454,14 +493,37 @@
                         <span>Version ${versionNum}</span>
                         <span class="download-count">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            ${downloadCount}
+                            <span id="global-count-${key}">...</span> Downloads
                         </span>
                     </div>
                     ${index === 0 ? '<span style="color: #00ff88; font-size:0.85rem; font-weight:600;">Neu</span>' : '<span style="opacity:0.4; font-size:0.85rem;">APK</span>'}
                 `;
+                item.addEventListener('click', () => incrementGlobalCount(apk));
                 versionsMenu.appendChild(item);
             });
+
+            // Live-Zahlen asynchron nachladen
+            updateAllCounters();
         }
+
+        async function updateAllCounters() {
+            apkFiles.forEach(async (apk, index) => {
+                const count = await fetchGlobalCount(apk, index);
+                const formattedCount = count.toLocaleString('de-DE');
+                const key = getCounterKey(apk);
+
+                const el = document.getElementById(`global-count-${key}`);
+                if (el) el.textContent = formattedCount;
+
+                if (index === 0) {
+                    const mainEl = document.getElementById('global-count-latest');
+                    if (mainEl) mainEl.textContent = formattedCount;
+                    mainApkDetails.textContent = `Aktuellste Version v${extractVersion(apk)} • Stabil (${formattedCount} Downloads)`;
+                }
+            });
+        }
+
+        renderInterface();
 
         versionsToggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
