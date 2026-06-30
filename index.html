@@ -775,49 +775,81 @@
             versionsMenu.classList.remove('show');
         });
 
-        /* ==========================================
-           2. EXTENSIONS MODAL MENU
+      /* ==========================================
+           2. EXTENSIONS MODAL MENU (ZEIGT JETZT BUILDS)
            ========================================== */
            
         const extensionsModal = document.getElementById('extensions-modal');
         const extensionsToggleBtn = document.getElementById('extensions-toggle-btn');
         const closeExtensionsBtn = document.getElementById('close-extensions-btn');
         const extensionsList = document.getElementById('extensions-list');
-
-        // --- CONFIGURATION ---
-        // Set to 1 to render the placeholder item.
-        const numberOfExtensions = 1; 
         
-        function renderExtensions() {
-            if (numberOfExtensions === 0) {
-                extensionsList.innerHTML = `<div class="placeholder-text">Coming soon... No extensions available yet.</div>`;
+        function renderExtensionsAsBuilds() {
+            // Titel des Modals anpassen, da es nun Builds zeigt
+            extensionsModal.querySelector('.modal-header h2').textContent = "Verfügbare Builds";
+            
+            if (apkFiles.length === 0) {
+                extensionsList.innerHTML = `<div class="placeholder-text">Keine Versionen gefunden.</div>`;
                 return;
             }
 
-            let html = '<div class="extensions-grid">';
-            // Add custom placeholder with downloadeable layout
+            let html = '<div class="extensions-grid" style="grid-template-columns: 1fr; gap: 12px;">';
+            
+            // 1. Die neueste/empfohlene Version generieren
+            const latestApk = apkFiles[0];
+            const latestVersion = extractVersion(latestApk);
+            
             html += `
-                <a href="placeholder-extension.apk" download="placeholder-extension.apk" class="extension-card">
-                    <div class="ext-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                            <polyline points="2 17 12 22 22 17"></polyline>
-                            <polyline points="2 12 12 17 22 12"></polyline>
+                <a href="${latestApk}" download="${latestApk}" class="extension-card" style="border-color: #00ff88; background: rgba(0, 255, 136, 0.1);">
+                    <div class="ext-icon" style="background: rgba(0, 255, 136, 0.2);">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
                     </div>
-                    <div class="ext-info">
-                        <span class="ext-name">ACE Extension Placeholder</span>
-                        <span class="ext-desc" style="color: #00ff88; font-weight: 500;">Click to download APK</span>
+                    <div class="ext-info" style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
+                        <div>
+                            <span class="ext-name" style="color: #00ff88;">Empfohlen (v${latestVersion})</span>
+                            <span class="ext-desc">${formatCleanName(latestApk)}</span>
+                        </div>
+                        <span class="latest-badge">Aktuell</span>
                     </div>
                 </a>
             `;
+
+            // Trennlinie für die Historie
+            html += `<div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #628a73; margin-top: 10px; font-weight: 600;">Versionsverlauf</div>`;
+
+            // 2. Alle Versionen auflisten
+            apkFiles.forEach((apk, index) => {
+                const versionNum = extractVersion(apk);
+                html += `
+                    <a href="${apk}" download="${apk}" class="extension-card">
+                        <div class="ext-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#628a73" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <div class="ext-info" style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
+                            <div>
+                                <span class="ext-name">Version ${versionNum}</span>
+                                <span class="ext-desc">${index === 0 ? 'Neueste Veröffentlichung' : 'Älterer Build'}</span>
+                            </div>
+                            <span style="opacity: 0.5; font-size: 0.85rem;">${index === 0 ? '<span style="color: #00ff88; font-weight:600;">Neu</span>' : 'APK'}</span>
+                        </div>
+                    </a>
+                `;
+            });
+
             html += '</div>';
             extensionsList.innerHTML = html;
         }
 
         extensionsToggleBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            renderExtensions();
+            renderExtensionsAsBuilds();
             extensionsModal.classList.add('show');
         });
 
