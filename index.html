@@ -1,72 +1,984 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deploy News - Download</title>
+    <title>ACE NEX — Evolution for your Android</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;700&display=swap');
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f6f9;
+            font-family: 'Inter', sans-serif;
+            background-color: #020503;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* --- PURE MINIMALIST BLACK & WHITE LOADING SCREEN --- */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #000000;
+            z-index: 9999;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
         }
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+
+        .loader-text {
+            font-family: 'Space Grotesk', sans-serif;
+            color: #ffffff;
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        /* --- LARGER & MODERN INFO POPUP --- */
+        #info-popup {
+            position: fixed;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(4, 18, 11, 0.85);
+            border: 2px solid rgba(0, 255, 136, 0.4);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            padding: 22px 40px;
+            border-radius: 18px;
+            z-index: 1000;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 255, 136, 0.15);
+            opacity: 0;
+            visibility: hidden;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease;
+            pointer-events: none;
             text-align: center;
-            max-width: 350px;
-            width: 100%;
+            max-width: 90%;
+            min-width: 320px;
         }
-        .icon {
-            width: 80px;
-            height: 80px;
-            background-color: #3ddc84; /* Android Grün */
-            border-radius: 20px;
-            margin: 0 auto 15px;
+
+        #info-popup.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #info-popup.fade-out {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-30px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 1, 1);
+        }
+
+        .popup-title {
+            font-family: 'Space Grotesk', sans-serif;
+            color: #00ff88;
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: -0.01em;
+            line-height: 1.4;
+        }
+
+        /* --- BACKGROUND CONTAINER --- */
+        .bg-container {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .sq {
+            position: absolute;
+            border-radius: 12px;
+            mix-blend-mode: screen;
+            pointer-events: none;
+            animation: floatAround infinite ease-in-out;
+            transition: filter 0.4s ease-out;
+        }
+
+        @keyframes floatAround {
+            0%, 100% {
+                transform: translate(var(--ix, 0px), var(--iy, 0px)) rotate(0deg) scale(1);
+                opacity: var(--base-opacity);
+            }
+            50% {
+                transform: translate(calc(var(--drift-x) + var(--ix, 0px)), calc(var(--drift-y) + var(--iy, 0px))) rotate(var(--drift-rot)) scale(1.05);
+                opacity: calc(var(--base-opacity) + 0.15);
+            }
+        }
+
+        .bg-vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 40%, rgba(2, 5, 3, 0.1) 0%, rgba(2, 5, 3, 0.85) 80%);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* --- HEADER AREA --- */
+        .top-header {
+            position: relative;
+            width: 100%;
+            padding: 30px 10%;
+            display: flex;
+            justify-content: flex-end;
+            z-index: 30;
+        }
+
+        .header-buttons-group {
+            display: flex;
+            gap: 16px;
+        }
+
+        .header-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(4, 14, 9, 0.6);
+            color: #a0f0c8;
+            border: 1px solid rgba(0, 255, 136, 0.25);
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 12px 24px;
+            border-radius: 10px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .header-btn:hover {
+            background: rgba(0, 255, 136, 0.15);
+            color: #00ff88;
+            border-color: #00ff88;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* --- EXTENSIONS MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 5, 3, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 2000;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 40px;
-            color: white;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
         }
-        h2 {
-            margin: 10px 0 5px;
-            color: #1a1a1a;
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
         }
-        .meta {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 25px;
+
+        .modal-window {
+            background: rgba(4, 18, 11, 0.95);
+            border: 1px solid rgba(0, 255, 136, 0.25);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 255, 136, 0.1);
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .btn {
-            display: inline-block;
-            background-color: #3ddc84;
-            color: #000;
-            padding: 12px 30px;
-            border-radius: 25px;
+
+        .modal-overlay.show .modal-window {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 32px;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+        }
+
+        .modal-header h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            color: #00ff88;
+            font-size: 1.5rem;
+            letter-spacing: -0.01em;
+        }
+
+        .close-modal-btn {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 2rem;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: all 0.2s ease;
+            padding: 0;
+        }
+
+        .close-modal-btn:hover {
+            opacity: 1;
+            color: #00ff88;
+            transform: scale(1.1);
+        }
+
+        .modal-body {
+            padding: 32px;
+            overflow-y: auto;
+        }
+
+        .placeholder-text {
+            text-align: center;
+            color: rgba(160, 240, 200, 0.6);
+            font-size: 1.1rem;
+            padding: 40px 0;
+            font-weight: 300;
+        }
+
+        .extensions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .extension-card {
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.15);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.3s ease;
+            cursor: pointer;
             text-decoration: none;
-            font-weight: bold;
-            transition: background 0.2s;
         }
-        .btn:hover {
-            background-color: #32b86c;
+
+        .extension-card:hover {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: #00ff88;
+            transform: translateY(-2px);
+        }
+
+        .ext-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.05));
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ext-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .ext-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            color: #ffffff;
+            font-size: 1rem;
+        }
+
+        .ext-desc {
+            font-size: 0.8rem;
+            color: #628a73;
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 10%;
+            z-index: 5;
+        }
+
+        .title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(3.5rem, 8vw, 8rem);
+            line-height: 0.95;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #ffffff 30%, #a0f0c8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 24px;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+
+        .subtitle {
+            font-size: clamp(1.1rem, 2vw, 1.35rem);
+            font-weight: 300;
+            color: #a0f0c8;
+            max-width: 540px;
+            line-height: 1.6;
+            opacity: 0.9;
+            text-shadow: 0 4px 14px rgba(0,0,0,0.6);
+        }
+
+        /* --- FOOTER AREA --- */
+        .bottom-bar {
+            width: 100%;
+            padding: 40px 10%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            z-index: 10;
+            background: linear-gradient(to top, #020503 70%, transparent 100%);
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .buttons-group {
+            display: flex;
+            gap: 12px;
+            position: relative;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #00ff88 0%, #00e67a 100%);
+            color: #020503;
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 16px 36px;
+            border-radius: 14px;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 30px rgba(0, 255, 136, 0.25);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(0, 255, 136, 0.45);
+        }
+
+        .versions-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(4, 14, 9, 0.6);
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.25);
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 16px 24px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .versions-btn:hover {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.15);
+        }
+
+        .versions-dropdown {
+            position: absolute;
+            bottom: calc(100% + 12px);
+            left: 0;
+            width: 320px;
+            max-height: 320px;
+            background: rgba(4, 14, 9, 0.95);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 16px;
+            padding: 8px;
+            overflow-y: auto;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+        }
+
+        .versions-dropdown.show {
+            display: flex;
+            animation: fadeInUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dropdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(0, 255, 136, 0.12);
+            color: #00ff88;
+            padding-left: 20px;
+        }
+
+        .dropdown-item.current-highlight {
+            background: rgba(0, 255, 136, 0.08);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+        
+        .dropdown-item.current-highlight:hover {
+            background: rgba(0, 255, 136, 0.18);
+        }
+
+        .dropdown-section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #628a73;
+            padding: 10px 16px 4px 16px;
+            font-weight: 600;
+            border-top: 1px solid rgba(0, 255, 136, 0.1);
+            margin-top: 4px;
+        }
+
+        .latest-badge {
+            font-size: 0.75rem;
+            background: rgba(0, 255, 136, 0.15);
+            color: #00ff88;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .apk-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .apk-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.15rem;
+            color: #ffffff;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .apk-meta {
+            font-size: 0.9rem;
+            color: #628a73;
+        }
+
+        /* --- BRANDING AREA --- */
+        .branding {
+            text-align: right;
+            font-size: 0.85rem;
+            color: rgba(160, 240, 200, 0.5);
+            font-weight: 400;
+            letter-spacing: 0.02em;
+            line-height: 1.4;
+        }
+
+        .branding span {
+            font-family: 'Space Grotesk', sans-serif;
+            color: rgba(0, 255, 136, 0.8);
+            font-weight: 600;
+        }
+
+        /* --- VOLLE HANDY OPTIMIERUNG (RESPONSIVE) --- */
+        @media (max-width: 900px) {
+            .top-header { 
+                padding: 20px 6%; 
+            }
+            
+            .header-btn {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+
+            .main-content {
+                padding: 40px 6% 20px 6%;
+                justify-content: center;
+            }
+            
+            .bottom-bar { 
+                flex-direction: column-reverse; 
+                align-items: center; 
+                padding: 20px 6% 30px 6%; 
+                gap: 24px; 
+            }
+            
+            .footer-left { 
+                flex-direction: column; 
+                align-items: center; 
+                width: 100%; 
+                gap: 16px; 
+            }
+            
+            .buttons-group { 
+                width: 100%; 
+                flex-direction: column; 
+            }
+            
+            .download-btn, .versions-btn { 
+                width: 100%; 
+                justify-content: center; 
+            }
+            
+            .versions-dropdown { 
+                width: 100%; 
+            }
+            
+            .apk-info {
+                text-align: center;
+            }
+            
+            .branding { 
+                text-align: center; 
+                width: 100%; 
+                border-bottom: 1px solid rgba(0, 255, 136, 0.1); 
+                padding-bottom: 16px; 
+                margin-bottom: 4px;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div class="icon">📰</div>
-    <h2>Deploy News</h2>
-    <p class="meta">Version 1.0.0 • APK • 14.2 MB</p>
-    <a href="deploy-news.apk" download="DeployNews.apk" class="btn">APK herunterladen</a>
-</div>
+    <div id="loader">
+        <div class="loader-text">ACE NEX</div>
+    </div>
 
+    <div id="info-popup">
+        <div class="popup-title" id="popup-text-content">Searching latest version...</div>
+    </div>
+
+    <div id="extensions-modal" class="modal-overlay">
+        <div class="modal-window">
+            <div class="modal-header">
+                <h2>Extensions</h2>
+                <button class="close-modal-btn" id="close-extensions-btn">&times;</button>
+            </div>
+            <div class="modal-body" id="extensions-list">
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-container" id="squares-container"></div>
+    <div class="bg-vignette"></div>
+
+    <header class="top-header">
+        <div class="header-buttons-group">
+            <a href="mailto:support.einfynn@gmail.com" class="header-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                Support
+            </a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <h1 class="title">ACE<br>Launcher</h1>
+        <p class="subtitle">The intelligent dashboard experience for your Android smartphone. Minimalist in design.</p>
+    </main>
+
+    <footer class="bottom-bar">
+        <div class="footer-left">
+            <div class="buttons-group">
+                <a href="#" id="main-download-btn" class="download-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Start Download
+                </a>
+                
+                <button class="versions-btn" id="versions-toggle-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="4" y1="6" x2="20" y2="6"></line>
+                        <line x1="4" y1="12" x2="20" y2="12"></line>
+                        <line x1="4" y1="18" x2="20" y2="18"></line>
+                    </svg>
+                    Builds
+                </button>
+
+                <button id="extensions-toggle-btn" class="versions-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Extensions
+                </button>
+
+                <div class="versions-dropdown" id="versions-menu"></div>
+            </div>
+            
+            <div class="apk-info" id="main-apk-info">
+                <span class="apk-name" id="main-apk-title">Analyzing archive...</span>
+                <span class="apk-meta" id="main-apk-details">Searching for available builds...</span>
+            </div>
+        </div>
+
+        <div class="branding">
+            Security Notice:<br>Download ACE Launcher <span>exclusively through this website</span>.
+        </div>
+    </footer>
+
+    <script>
+        /* ==========================================
+           1. AUTOMATIC APK MANAGEMENT & SORTING
+           ========================================== */
+        
+        const apkFiles = [
+             "ACE Launcher 1.0.1.1.apk",
+             "ACE Launcher Release 1.0.1.0.apk",
+             "ACE Launcher 1.0.0.38.apk",
+             "ACE Launcher 1.0.0.37.apk",
+             "ACE Launcher 1.0.0.36.apk",
+             "ACE Launcher 1.0.0.35.apk",
+             "ACE Launcher 1.0.0.34.apk",
+             "ACE Launcher 1.0.0.33.apk",
+             "ACE Launcher 1.0.0.30.apk",
+             "ACE Launcher 1.0.0.29.apk",
+             "ACE Launcher 1.0.0.28.apk",
+             "ACE Launcher 1.0.0.27.apk",
+             "ACE Launcher 1.0.0.26.apk",
+             "ACE Launcher 1.0.0.25.apk",
+             "ACE Launcher 1.0.0.24.apk",
+             "ACE Launcher 1.0.0.23.apk",
+             "ACE Launcher 1.0.0.22.apk",
+             "ACE Launcher 1.0.0.21.apk",
+             "ACE Launcher 1.0.0.20.apk",
+             "ACE Launcher 1.0.0.19.apk",
+             "ACE Launcher 1.0.0.18.apk",
+             "ACE Launcher 1.0.0.17.apk",
+             "ACE Launcher 1.0.0.16.apk",
+             "ACE Launcher 1.0.0.15.apk",
+             "ACE Launcher 1.0.0.14.apk",
+        ];
+
+        function extractVersion(filename) {
+            const match = filename.match(/(\d+\.\d+\.\d+\.\d+|\d+\.\d+\.\d+)/);
+            return match ? match[0] : "0.0.0";
+        }
+
+        function formatCleanName(filename) {
+            return filename
+                .replace(/\.apk$/i, '')
+                .replace('Launcehr', 'Launcher');
+        }
+
+        function sortApks(a, b) {
+            const vA = extractVersion(a).split('.').map(Number);
+            const vB = extractVersion(b).split('.').map(Number);
+            for (let i = 0; i < Math.max(vA.length, vB.length); i++) {
+                const numA = vA[i] || 0;
+                const numB = vB[i] || 0;
+                if (numA !== numB) return numB - numA; 
+            }
+            return 0;
+        }
+
+        apkFiles.sort(sortApks);
+
+        const mainDownloadBtn = document.getElementById('main-download-btn');
+        const mainApkTitle = document.getElementById('main-apk-title');
+        const mainApkDetails = document.getElementById('main-apk-details');
+        const versionsMenu = document.getElementById('versions-menu');
+        const versionsToggleBtn = document.getElementById('versions-toggle-btn');
+        const popupTextContent = document.getElementById('popup-text-content');
+
+        if (apkFiles.length > 0) {
+            const latestApk = apkFiles[0];
+            const latestVersion = extractVersion(latestApk);
+
+            mainDownloadBtn.href = latestApk;
+            mainDownloadBtn.setAttribute('download', latestApk);
+            mainApkTitle.textContent = formatCleanName(latestApk);
+            mainApkDetails.textContent = `Latest Version v${latestVersion} • Stable`;
+            
+            popupTextContent.innerHTML = `Newest Release <span style="color:#ffffff;">${latestApk}</span>`;
+
+            const currentItem = document.createElement('a');
+            currentItem.href = latestApk;
+            currentItem.setAttribute('download', latestApk);
+            currentItem.classList.add('dropdown-item', 'current-highlight');
+            currentItem.innerHTML = `
+                <span style="font-weight: 600; color: #00ff88;">Recommended (v${latestVersion})</span>
+                <span class="latest-badge">Active</span>
+            `;
+            versionsMenu.appendChild(currentItem);
+
+            const sectionTitle = document.createElement('div');
+            sectionTitle.classList.add('dropdown-section-title');
+            sectionTitle.textContent = "Version History";
+            versionsMenu.appendChild(sectionTitle);
+
+            apkFiles.forEach((apk, index) => {
+                const versionNum = extractVersion(apk);
+                const item = document.createElement('a');
+                item.href = apk;
+                item.setAttribute('download', apk);
+                item.classList.add('dropdown-item');
+                
+                item.innerHTML = `
+                    <span>Version ${versionNum}</span>
+                    ${index === 0 ? '<span style="color: #00ff88; font-size:0.85rem; font-weight:600;">New</span>' : '<span style="opacity:0.4; font-size:0.85rem;">APK</span>'}
+                `;
+                versionsMenu.appendChild(item);
+            });
+        }
+
+        versionsToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            versionsMenu.classList.toggle('show');
+        });
+
+        document.addEventListener('click', () => {
+            versionsMenu.classList.remove('show');
+        });
+
+        /* ==========================================
+           2. EXTENSIONS MODAL MENU
+           ========================================== */
+           
+        const extensionsModal = document.getElementById('extensions-modal');
+        const extensionsToggleBtn = document.getElementById('extensions-toggle-btn');
+        const closeExtensionsBtn = document.getElementById('close-extensions-btn');
+        const extensionsList = document.getElementById('extensions-list');
+
+        // --- CONFIGURATION ---
+        // Set to 1 to render the placeholder item.
+        const numberOfExtensions = 1; 
+        
+        function renderExtensions() {
+            if (numberOfExtensions === 0) {
+                extensionsList.innerHTML = `<div class="placeholder-text">Coming soon... No extensions available yet.</div>`;
+                return;
+            }
+
+            let html = '<div class="extensions-grid">';
+            // Add custom placeholder with downloadeable layout
+            html += `
+                <a href="placeholder-extension.apk" download="placeholder-extension.apk" class="extension-card">
+                    <div class="ext-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="ext-info">
+                        <span class="ext-name">ACE Extension Placeholder</span>
+                        <span class="ext-desc" style="color: #00ff88; font-weight: 500;">Click to download APK</span>
+                    </div>
+                </a>
+            `;
+            html += '</div>';
+            extensionsList.innerHTML = html;
+        }
+
+        extensionsToggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            renderExtensions();
+            extensionsModal.classList.add('show');
+        });
+
+        closeExtensionsBtn.addEventListener('click', () => {
+            extensionsModal.classList.remove('show');
+        });
+
+        extensionsModal.addEventListener('click', (e) => {
+            if (e.target === extensionsModal) {
+                extensionsModal.classList.remove('show');
+            }
+        });
+
+
+        /* ==========================================
+           3. TIMER MANAGEMENT (LOADER & POPUP)
+           ========================================== */
+        window.addEventListener('load', () => {
+            const loader = document.getElementById('loader');
+            const popup = document.getElementById('info-popup');
+
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                loader.style.visibility = 'hidden';
+
+                setTimeout(() => {
+                    popup.classList.add('show');
+                    
+                    setTimeout(() => {
+                        popup.classList.add('fade-out');
+                        setTimeout(() => {
+                            popup.classList.remove('show', 'fade-out');
+                        }, 500); 
+                    }, 5000);
+
+                }, 400); 
+
+            }, 3000); 
+        });
+
+        /* ==========================================
+           4. ANIMATED & INTERACTIVE BACKGROUND
+           ========================================== */
+        const container = document.getElementById('squares-container');
+        const greenColors = ['#04120a', '#0a2413', '#11351c', '#1b4d2a', '#286e3d', '#3d9c5b', '#00ff88'];
+        const purpleColors = ['#2b061a', '#4a0a2c', '#1c051a'];
+        const totalSquares = 130;
+        const squaresData = [];
+
+        for (let i = 0; i < totalSquares; i++) {
+            const square = document.createElement('div');
+            square.classList.add('sq');
+
+            const posX = Math.random() * 120 - 10;
+            const posY = Math.random() * 120 - 10;
+            square.style.left = posX + '%';
+            square.style.top = posY + '%';
+
+            const size = Math.floor(Math.random() * 160) + 60;
+            square.style.width = size + 'px';
+            square.style.height = size + 'px';
+
+            let colorPool = greenColors;
+            if (posX < 35 && posY < 45 && Math.random() > 0.3) {
+                colorPool = purpleColors;
+            } else if (Math.random() > 0.92) { 
+                colorPool = purpleColors;
+            }
+            square.style.backgroundColor = colorPool[Math.floor(Math.random() * colorPool.length)];
+
+            const driftX = (Math.random() * 60 - 30) + 'px';
+            const driftY = (Math.random() * 60 - 30) + 'px';
+            const driftRot = (Math.random() * 30 - 15) + 'deg';
+            const baseOpacity = (Math.random() * 0.4 + 0.35);
+
+            square.style.setProperty('--drift-x', driftX);
+            square.style.setProperty('--drift-y', driftY);
+            square.style.setProperty('--drift-rot', driftRot);
+            square.style.setProperty('--base-opacity', baseOpacity);
+
+            square.style.animationDuration = (Math.random() * 12 + 10) + 's';
+            square.style.animationDelay = '-' + (Math.random() * 20) + 's';
+
+            container.appendChild(square);
+            
+            squaresData.push({
+                el: square,
+                x: posX,
+                y: posY,
+                size: size,
+                depth: Math.random() * 1.5 + 0.5,
+                currentIx: 0,
+                currentIy: 0
+            });
+        }
+
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let targetMouseX = mouseX;
+        let targetMouseY = mouseY;
+
+        document.addEventListener('mousemove', (e) => {
+            targetMouseX = e.clientX;
+            targetMouseY = e.clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if(e.touches.length > 0) {
+                targetMouseX = e.touches[0].clientX;
+                targetMouseY = e.touches[0].clientY;
+            }
+        });
+
+        function animateInteractivity() {
+            mouseX += (targetMouseX - mouseX) * 0.1;
+            mouseY += (targetMouseY - mouseY) * 0.1;
+
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
+
+            squaresData.forEach(data => {
+                const sqCenterX = (data.x / 100) * winW + (data.size / 2);
+                const sqCenterY = (data.y / 100) * winH + (data.size / 2);
+
+                const dx = mouseX - sqCenterX;
+                const dy = mouseY - sqCenterY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                let repelX = 0;
+                let repelY = 0;
+                const repelRadius = 180;
+
+                if (dist < repelRadius) {
+                    const force = (repelRadius - dist) / repelRadius;
+                    repelX = -(dx / dist) * force * 50;
+                    repelY = -(dy / dist) * force * 50;
+                    
+                    data.el.style.filter = `brightness(1.6) drop-shadow(0 0 10px ${data.el.style.backgroundColor})`;
+                    data.el.style.zIndex = "10";
+                } else {
+                    data.el.style.filter = 'none';
+                    data.el.style.zIndex = "1";
+                }
+
+                const parallaxX = ((mouseX / winW) - 0.5) * -60 * data.depth;
+                const parallaxY = ((mouseY / winH) - 0.5) * -60 * data.depth;
+
+                const targetIx = parallaxX + repelX;
+                const targetIy = parallaxY + repelY;
+
+                data.currentIx += (targetIx - data.currentIx) * 0.15;
+                data.currentIy += (targetIy - data.currentIy) * 0.15;
+
+                data.el.style.setProperty('--ix', `${data.currentIx}px`);
+                data.el.style.setProperty('--iy', `${data.currentIy}px`);
+            });
+
+            requestAnimationFrame(animateInteractivity);
+        }
+        
+        animateInteractivity();
+    </script>
 </body>
 </html>
