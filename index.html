@@ -899,32 +899,41 @@
             }
         });
 
-        /* ==========================================
-           3. TIMER MANAGEMENT (LOADER & POPUP)
+       /* ==========================================
+           3. TIMER MANAGEMENT (LOADER & POPUP) WITH FAILSAFE
            ========================================== */
-        window.addEventListener('load', () => {
+        function hideLoader() {
             const loaderEl = document.getElementById('loader');
             const popup = document.getElementById('info-popup');
+            
+            // Falls er schon ausgeblendet wurde, nichts tun
+            if (loaderEl.style.visibility === 'hidden') return;
+
+            loaderEl.style.opacity = '0';
+            loaderEl.style.visibility = 'hidden';
 
             setTimeout(() => {
-                loaderEl.style.opacity = '0';
-                loaderEl.style.visibility = 'hidden';
-
-                setTimeout(() => {
+                if (popup) {
                     popup.classList.add('show');
-                    
                     setTimeout(() => {
                         popup.classList.add('fade-out');
                         setTimeout(() => {
                             popup.classList.remove('show', 'fade-out');
                         }, 500); 
                     }, 5000);
+                }
+            }, 400);
+        }
 
-                }, 400); 
-
-            }, 3500); // Auf 3500 erhöht, damit das Intro 1 Sekunde länger bleibt
+        // 1. Regulärer Start, wenn alles fertig geladen ist (3,5 Sekunden extra Zeit)
+        window.addEventListener('load', () => {
+            setTimeout(hideLoader, 3500);
         });
 
+        // 2. NOTFALL-SCHUTZ: Falls ein Skript auf GitHub blockiert, 
+        // blendet sich der Ladebildschirm nach spätestens 6 Sekunden von alleine aus.
+        setTimeout(hideLoader, 6000);
+        
         /* ==========================================
            4. ANIMATED BACKGROUND (INTERACTIVE MAIN CONTENT SQUARES)
            ========================================== */
