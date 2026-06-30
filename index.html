@@ -24,24 +24,14 @@
             overflow-x: hidden;
         }
 
-        /* --- PURE MINIMALIST BLACK & WHITE LOADING SCREEN --- */
-        #loader {
+        /* --- OVERLAY FÜR DEN LADEBILDSCHIRM --- */
+        #loader-overlay {
             position: fixed;
             inset: 0;
-            background: #000000;
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
-        }
-
-        .loader-text {
-            font-family: 'Space Grotesk', sans-serif;
-            color: #ffffff;
-            font-size: 2.5rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
+            background: #020503;
+            z-index: 90;
+            transition: opacity 0.8s ease;
+            pointer-events: none;
         }
 
         /* --- LARGER & MODERN INFO POPUP --- */
@@ -97,13 +87,33 @@
             pointer-events: none;
         }
 
+        /* Temporär höherer z-index, damit die Quadrate über dem Rest schweben */
+        .bg-container.loading-layer {
+            z-index: 100; 
+        }
+
+        /* --- ANIMIERTE QUADRATE --- */
         .sq {
             position: absolute;
             border-radius: 12px;
             mix-blend-mode: screen;
             pointer-events: none;
+            /* Transition für das sanfte Fliegen in die Formation und zurück */
+            transition: left 1.5s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                        top 1.5s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                        width 1.5s ease, height 1.5s ease, 
+                        background-color 1.5s ease, border-radius 1.5s ease, 
+                        opacity 1s ease;
+        }
+
+        .sq.text-mode {
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+            z-index: 10;
+        }
+
+        /* Wird hinzugefügt, sobald die Formation explodiert ist */
+        .sq.floating {
             animation: floatAround infinite ease-in-out;
-            transition: filter 0.4s ease-out;
         }
 
         @keyframes floatAround {
@@ -577,9 +587,7 @@
 </head>
 <body>
 
-    <div id="loader">
-        <div class="loader-text">ACE NEX</div>
-    </div>
+    <div id="loader-overlay"></div>
 
     <div id="info-popup">
         <div class="popup-title" id="popup-text-content">Searching latest version...</div>
@@ -596,7 +604,7 @@
         </div>
     </div>
 
-    <div class="bg-container" id="squares-container"></div>
+    <div class="bg-container loading-layer" id="squares-container"></div>
     <div class="bg-vignette"></div>
 
     <header class="top-header">
@@ -784,8 +792,6 @@
         const closeExtensionsBtn = document.getElementById('close-extensions-btn');
         const extensionsList = document.getElementById('extensions-list');
 
-        // --- CONFIGURATION ---
-        // Set to 1 to render the placeholder item.
         const numberOfExtensions = 1; 
         
         function renderExtensions() {
@@ -795,7 +801,6 @@
             }
 
             let html = '<div class="extensions-grid">';
-            // Add custom placeholder with downloadeable layout
             html += `
                 <a href="placeholder-extension.apk" download="placeholder-extension.apk" class="extension-card">
                     <div class="ext-icon">
@@ -833,52 +838,41 @@
 
 
         /* ==========================================
-           3. TIMER MANAGEMENT (LOADER & POPUP)
+           3. ANIMATED TEXT FORMATION & BACKGROUND
            ========================================== */
-        window.addEventListener('load', () => {
-            const loader = document.getElementById('loader');
-            const popup = document.getElementById('info-popup');
-
-            setTimeout(() => {
-                loader.style.opacity = '0';
-                loader.style.visibility = 'hidden';
-
-                setTimeout(() => {
-                    popup.classList.add('show');
-                    
-                    setTimeout(() => {
-                        popup.classList.add('fade-out');
-                        setTimeout(() => {
-                            popup.classList.remove('show', 'fade-out');
-                        }, 500); 
-                    }, 5000);
-
-                }, 400); 
-
-            }, 3000); 
-        });
-
-        /* ==========================================
-           4. ANIMATED & INTERACTIVE BACKGROUND
-           ========================================== */
+        
         const container = document.getElementById('squares-container');
         const greenColors = ['#04120a', '#0a2413', '#11351c', '#1b4d2a', '#286e3d', '#3d9c5b', '#00ff88'];
         const purpleColors = ['#2b061a', '#4a0a2c', '#1c051a'];
         const totalSquares = 130;
         const squaresData = [];
 
+        // Matrix für "ACE NEX"
+        const textGrid = [
+            ".XX. .XX. XXXX   X...X XXXX X...X",
+            "X..X X..X X...   XX..X X... .X.X.",
+            "XXXX X... XXX.   X.X.X XXX. ..X..",
+            "X..X X..X X...   X..XX X... .X.X.",
+            "X..X .XX. XXXX   X...X XXXX X...X"
+        ];
+        
+        const targetCoords = [];
+        for (let r = 0; r < textGrid.length; r++) {
+            for (let c = 0; c < textGrid[r].length; c++) {
+                if (textGrid[r][c] === 'X') {
+                    targetCoords.push({ r, c });
+                }
+            }
+        }
+
         for (let i = 0; i < totalSquares; i++) {
             const square = document.createElement('div');
             square.classList.add('sq');
 
+            // Zufällige Basis-Werte
             const posX = Math.random() * 120 - 10;
             const posY = Math.random() * 120 - 10;
-            square.style.left = posX + '%';
-            square.style.top = posY + '%';
-
             const size = Math.floor(Math.random() * 160) + 60;
-            square.style.width = size + 'px';
-            square.style.height = size + 'px';
 
             let colorPool = greenColors;
             if (posX < 35 && posY < 45 && Math.random() > 0.3) {
@@ -886,7 +880,7 @@
             } else if (Math.random() > 0.92) { 
                 colorPool = purpleColors;
             }
-            square.style.backgroundColor = colorPool[Math.floor(Math.random() * colorPool.length)];
+            const bgColor = colorPool[Math.floor(Math.random() * colorPool.length)];
 
             const driftX = (Math.random() * 60 - 30) + 'px';
             const driftY = (Math.random() * 60 - 30) + 'px';
@@ -897,14 +891,33 @@
             square.style.setProperty('--drift-y', driftY);
             square.style.setProperty('--drift-rot', driftRot);
             square.style.setProperty('--base-opacity', baseOpacity);
-
             square.style.animationDuration = (Math.random() * 12 + 10) + 's';
             square.style.animationDelay = '-' + (Math.random() * 20) + 's';
+
+            // Speichern der Original-Stile für die spätere "Explosion"
+            const origStyles = {
+                left: posX + '%',
+                top: posY + '%',
+                width: size + 'px',
+                height: size + 'px',
+                bgColor: bgColor,
+                opacity: baseOpacity,
+                borderRadius: '12px'
+            };
+
+            // Setze initiale Styles sofort, damit CSS-Transition später funktioniert
+            square.style.left = origStyles.left;
+            square.style.top = origStyles.top;
+            square.style.width = origStyles.width;
+            square.style.height = origStyles.height;
+            square.style.backgroundColor = origStyles.bgColor;
 
             container.appendChild(square);
             
             squaresData.push({
                 el: square,
+                origStyles: origStyles,
+                targetTextNode: i < targetCoords.length ? targetCoords[i] : null,
                 x: posX,
                 y: posY,
                 size: size,
@@ -914,6 +927,73 @@
             });
         }
 
+        // --- SEQUENZ 1: Quadrate formen den Text ---
+        setTimeout(() => {
+            const cellW = Math.min(20, window.innerWidth / 36); // Responsives Grid
+            const startX = window.innerWidth / 2 - (33 * cellW) / 2;
+            const startY = window.innerHeight / 2 - (5 * cellW) / 2;
+
+            squaresData.forEach(sq => {
+                if (sq.targetTextNode) {
+                    sq.el.classList.add('text-mode');
+                    sq.el.style.left = (startX + sq.targetTextNode.c * cellW) + 'px';
+                    sq.el.style.top = (startY + sq.targetTextNode.r * cellW) + 'px';
+                    sq.el.style.width = (cellW * 0.8) + 'px';
+                    sq.el.style.height = (cellW * 0.8) + 'px';
+                    sq.el.style.backgroundColor = '#00ff88';
+                    sq.el.style.borderRadius = '4px';
+                    sq.el.style.opacity = '1';
+                } else {
+                    sq.el.style.opacity = '0'; // Nicht benötigte Quadrate kurz unsichtbar machen
+                }
+            });
+        }, 100);
+
+        // --- SEQUENZ 2: Explosion und Übergang ins Dashboard ---
+        setTimeout(() => {
+            const bgContainer = document.getElementById('squares-container');
+            bgContainer.classList.remove('loading-layer');
+
+            // Lass die Quadrate an ihre Originalpositionen zurückfliegen
+            squaresData.forEach(sq => {
+                sq.el.classList.remove('text-mode');
+                sq.el.style.left = sq.origStyles.left;
+                sq.el.style.top = sq.origStyles.top;
+                sq.el.style.width = sq.origStyles.width;
+                sq.el.style.height = sq.origStyles.height;
+                sq.el.style.backgroundColor = sq.origStyles.bgColor;
+                sq.el.style.borderRadius = sq.origStyles.borderRadius;
+                sq.el.style.opacity = sq.origStyles.opacity;
+            });
+
+            // Blende das Loader-Overlay aus
+            const overlay = document.getElementById('loader-overlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 1000);
+
+            // Blende Popup ein
+            const popup = document.getElementById('info-popup');
+            popup.classList.add('show');
+            setTimeout(() => {
+                popup.classList.add('fade-out');
+                setTimeout(() => popup.classList.remove('show', 'fade-out'), 500);
+            }, 4000);
+
+        }, 3200);
+
+        // --- SEQUENZ 3: Aktiviere die normalen Schwebe-Animationen nach der Explosion ---
+        setTimeout(() => {
+            squaresData.forEach(sq => {
+                sq.el.classList.add('floating');
+                // Ersetze transition, damit Mausbewegungen verzögerungsfrei laufen
+                sq.el.style.transition = 'filter 0.4s ease-out';
+            });
+        }, 4500);
+
+
+        /* ==========================================
+           4. MAUS / TOUCH INTERAKTIVITÄT
+           ========================================== */
         let mouseX = window.innerWidth / 2;
         let mouseY = window.innerHeight / 2;
         let targetMouseX = mouseX;
@@ -939,6 +1019,9 @@
             const winH = window.innerHeight;
 
             squaresData.forEach(data => {
+                // Interaktion erst zulassen, wenn sie sich im "Floating"-Status befinden
+                if (!data.el.classList.contains('floating')) return;
+
                 const sqCenterX = (data.x / 100) * winW + (data.size / 2);
                 const sqCenterY = (data.y / 100) * winH + (data.size / 2);
 
