@@ -306,6 +306,28 @@
             color: #628a73;
         }
 
+        /* --- BACK BUTTON FOR MODAL --- */
+        .back-btn {
+            background: none;
+            border: none;
+            color: #a0f0c8;
+            cursor: pointer;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            margin-left: -12px;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+        }
+
         /* --- MAIN CONTENT --- */
         .main-content {
             flex-grow: 1;
@@ -684,12 +706,11 @@
         ];
 
         // HIER TRÄGST DU DEINE SEPARATEN EXTENSIONS/PLUGINS EIN
-        // Jetzt mit jeweils eigenen Versionen beider Plugins bestückt!
         const extensionFiles = [
              "Deploy NEWS 1.0.1.0.apk",
-    
+             "Deploy NEWS 1.0.0.5.apk",
              "ACE Weather 1.0.1.0.apk",
-        
+             "ACE Weather 1.0.0.1.apk",
         ];
 
         function extractVersion(filename) {
@@ -701,6 +722,11 @@
             return filename
                 .replace(/\.apk$/i, '')
                 .replace('Launcehr', 'Launcher');
+        }
+
+        // Extrahiert nur den Namen ohne Version (z.B. "Deploy NEWS")
+        function getBaseName(filename) {
+            return filename.replace(/\s*\d+\.\d+\.\d+(\.\d+)?\.apk$/i, '').trim();
         }
 
         function sortApks(a, b) {
@@ -777,7 +803,7 @@
         });
 
         /* ==========================================
-           2. EXTENSIONS MODAL MENU
+           2. EXTENSIONS MODAL MENU (GROUPS & VERSIONS)
            ========================================== */
            
         const extensionsModal = document.getElementById('extensions-modal');
@@ -785,68 +811,135 @@
         const closeExtensionsBtn = document.getElementById('close-extensions-btn');
         const extensionsList = document.getElementById('extensions-list');
         
-        function renderExtensions() {
+        function renderExtensions(selectedGroup = null) {
             if (extensionFiles.length === 0) {
                 extensionsList.innerHTML = `<div class="placeholder-text">Coming soon... No extensions available yet.</div>`;
                 return;
             }
 
-            let html = '<div class="extensions-grid" style="grid-template-columns: 1fr; gap: 12px;">';
-            
-            extensionFiles.forEach((ext, index) => {
-                const versionNum = extractVersion(ext);
-                const cleanName = formatCleanName(ext);
-                
-                if (index === 0) {
-                    // Die oberste/neueste Extension wird grün hervorgehoben
-                    html += `
-                        <a href="${ext}" download="${ext}" class="extension-card" style="border-color: #00ff88; background: rgba(0, 255, 136, 0.1);">
-                            <div class="ext-icon" style="background: rgba(0, 255, 136, 0.2);">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                                    <polyline points="2 17 12 22 22 17"></polyline>
-                                    <polyline points="2 12 12 17 22 12"></polyline>
-                                </svg>
-                            </div>
-                            <div class="ext-info" style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
-                                <div>
-                                    <span class="ext-name" style="color: #00ff88; font-weight: 700;">${cleanName}</span>
-                                    <span class="ext-desc" style="color: rgba(255,255,255,0.6);">Version ${versionNum} (Featured)</span>
-                                </div>
-                                <span class="latest-badge">Neu</span>
-                            </div>
-                        </a>
-                    `;
-                } else {
-                    // Alle älteren Extensions darunter gelistet
-                    html += `
-                        <a href="${ext}" download="${ext}" class="extension-card">
-                            <div class="ext-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#628a73" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                                    <polyline points="2 17 12 22 22 17"></polyline>
-                                    <polyline points="2 12 12 17 22 12"></polyline>
-                                </svg>
-                            </div>
-                            <div class="ext-info" style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
-                                <div>
-                                    <span class="ext-name">${cleanName}</span>
-                                    <span class="ext-desc">Version ${versionNum}</span>
-                                </div>
-                                <span style="opacity: 0.5; font-size: 0.85rem;">APK</span>
-                            </div>
-                        </a>
-                    `;
+            // Gruppiere die Extensions nach ihrem Basis-Namen
+            const groupedExtensions = {};
+            extensionFiles.forEach(file => {
+                const baseName = getBaseName(file);
+                if (!groupedExtensions[baseName]) {
+                    groupedExtensions[baseName] = [];
                 }
+                groupedExtensions[baseName].push(file);
             });
 
-            html += '</div>';
-            extensionsList.innerHTML = html;
+            if (!selectedGroup) {
+                // --- ÜBERSICHTS-ANSICHT (Gruppen) ---
+                let html = '<div class="extensions-grid" style="grid-template-columns: 1fr; gap: 12px;">';
+                
+                Object.keys(groupedExtensions).forEach(groupName => {
+                    const files = groupedExtensions[groupName];
+                    const count = files.length;
+                    
+                    html += `
+                        <div class="extension-card group-card" data-group="${groupName}" style="border-color: #00ff88; background: rgba(0, 255, 136, 0.05);">
+                            <div class="ext-icon" style="background: rgba(0, 255, 136, 0.1);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                            </div>
+                            <div class="ext-info" style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
+                                <div>
+                                    <span class="ext-name" style="color: #00ff88; font-weight: 700;">${groupName}</span>
+                                    <span class="ext-desc" style="color: rgba(255,255,255,0.6);">${count} Version${count > 1 ? 'en' : ''} verfügbar</span>
+                                </div>
+                                <span style="font-size: 0.85rem; color: #00ff88; font-weight: 600;">Öffnen →</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                extensionsList.innerHTML = html;
+
+                // Klick-Event für die Gruppen-Karten
+                document.querySelectorAll('.group-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const group = card.getAttribute('data-group');
+                        renderExtensions(group);
+                    });
+                });
+
+            } else {
+                // --- DETAIL-ANSICHT (Versionen einer spezifischen Gruppe) ---
+                const files = groupedExtensions[selectedGroup];
+                
+                let html = `
+                    <button class="back-btn" id="back-to-groups-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        Zurück
+                    </button>
+                    <div class="extensions-grid" style="grid-template-columns: 1fr; gap: 12px;">
+                `;
+
+                files.forEach((ext, index) => {
+                    const versionNum = extractVersion(ext);
+                    const cleanName = formatCleanName(ext);
+                    
+                    if (index === 0) {
+                        html += `
+                            <a href="${ext}" download="${ext}" class="extension-card" style="border-color: #00ff88; background: rgba(0, 255, 136, 0.1);">
+                                <div class="ext-icon" style="background: rgba(0, 255, 136, 0.2);">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                </div>
+                                <div class="ext-info" style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
+                                    <div>
+                                        <span class="ext-name" style="color: #ffffff; font-weight: 700;">${cleanName}</span>
+                                        <span class="ext-desc" style="color: #00ff88;">Version ${versionNum} (Featured)</span>
+                                    </div>
+                                    <span class="latest-badge">Neu</span>
+                                </div>
+                            </a>
+                        `;
+                    } else {
+                        html += `
+                            <a href="${ext}" download="${ext}" class="extension-card">
+                                <div class="ext-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#628a73" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                </div>
+                                <div class="ext-info" style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
+                                    <div>
+                                        <span class="ext-name">${cleanName}</span>
+                                        <span class="ext-desc">Version ${versionNum}</span>
+                                    </div>
+                                    <span style="opacity: 0.5; font-size: 0.85rem;">APK</span>
+                                </div>
+                            </a>
+                        `;
+                    }
+                });
+
+                html += '</div>';
+                extensionsList.innerHTML = html;
+
+                // Event Listener für den Zurück-Button
+                document.getElementById('back-to-groups-btn').addEventListener('click', () => {
+                    renderExtensions(null); // Setzt die Ansicht zurück
+                });
+            }
         }
 
         extensionsToggleBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            renderExtensions();
+            renderExtensions(null); // Öffnet immer zuerst die Übersicht
             extensionsModal.classList.add('show');
         });
 
