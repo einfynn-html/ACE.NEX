@@ -781,13 +781,17 @@
         </div>
     </footer>
 
-    <script>
+     <script>
         const apkFiles = [
              "ACE Launcher 1.0.2.0.apk", "ACE Launcher 1.0.1.3.apk", "ACE Launcher 1.0.1.2.apk"
         ];
         const extensionFiles = [
              "Deploy NEWS 1.0.1.0.apk", "ACE Weather 1.0.1.0.apk"
         ];
+
+        // WICHTIG: Ändere diese Zahl (z. B. auf 2, 3, etc.), wenn du die Seite auf GitHub 
+        // aktualisierst und möchtest, dass JEDER das Pop-up noch einmal sieht!
+        const CURRENT_WEBSITE_VERSION = "1"; 
 
         function extractVersion(filename) {
             const match = filename.match(/(\d+\.\d+\.\d+\.\d+|\d+\.\d+\.\d+)/);
@@ -834,7 +838,10 @@
                 loader.style.visibility = 'hidden';
 
                 setTimeout(() => {
-                    if (localStorage.getItem('tos_accepted_ace_launcher') !== 'true') {
+                    // Prüft, ob der Nutzer schon die AKTUELLSTE Version akzeptiert hat
+                    const acceptedVersion = localStorage.getItem('tos_accepted_version');
+                    
+                    if (acceptedVersion !== CURRENT_WEBSITE_VERSION) {
                         mandatoryModal.classList.add('show');
                     } else {
                         showNotificationPopup();
@@ -843,7 +850,8 @@
             }, 3000);
 
             acceptTosBtn.addEventListener('click', () => {
-                localStorage.setItem('tos_accepted_ace_launcher', 'true');
+                // Speichert die aktuelle Versionsnummer im Browser des Nutzers
+                localStorage.setItem('tos_accepted_version', CURRENT_WEBSITE_VERSION);
                 mandatoryModal.classList.remove('show');
                 setTimeout(showNotificationPopup, 400);
             });
@@ -857,7 +865,7 @@
             }
         });
 
-        // Background Animation Setup Code Here...
+        // Background Animation Setup
         const container = document.getElementById('squares-container');
         for (let i = 0; i < 50; i++) {
             const square = document.createElement('div');
@@ -869,5 +877,6 @@
             container.appendChild(square);
         }
     </script>
+
 </body>
 </html>
