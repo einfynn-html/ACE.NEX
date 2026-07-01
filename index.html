@@ -580,6 +580,13 @@
                 font-size: 0.9rem;
             }
         }
+        
+        /* --- TOS DOC STYLING --- */
+        .tos-document h3 { color: #00ff88; font-family: 'Space Grotesk', sans-serif; margin-top: 24px; margin-bottom: 8px; font-size: 1.1rem; }
+        .tos-document h4 { color: #a0f0c8; margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem; }
+        .tos-document p { margin-bottom: 12px; }
+        .tos-document ul { margin-bottom: 12px; padding-left: 20px; }
+        .tos-document li { margin-bottom: 6px; }
     </style>
 </head>
 <body>
@@ -593,22 +600,91 @@
     </div>
 
     <div id="tos-modal" class="modal-overlay">
-        <div class="modal-window" style="max-width: 500px;">
+        <div class="modal-window" style="max-width: 750px;">
             <div class="modal-header">
                 <h2>Terms of Service & Privacy</h2>
+                <button class="close-modal-btn" id="close-tos-btn" style="display: none;">&times;</button>
             </div>
             <div class="modal-body">
                 <p style="margin-bottom: 16px; line-height: 1.5; color: #a0f0c8; font-size: 0.95rem;">
                     To download and use ACE Launcher and its extensions, you must review and accept our Terms of Use and Privacy Policy.
                 </p>
-                <div style="max-height: 160px; overflow-y: auto; background: rgba(2, 5, 3, 0.6); padding: 14px; border-radius: 10px; border: 1px solid rgba(0, 255, 136, 0.15); font-size: 0.85rem; color: rgba(255,255,255,0.75); margin-bottom: 20px; line-height: 1.5;">
-                    <strong style="color: #00ff88;">1. License & Restrictions</strong><br>
-                    We grant you a limited, non-exclusive, revocable license for personal, non-commercial use on Android 7.0+ devices. You are strictly prohibited from reverse engineering, decompiling, or distributing modified versions of the app.<br><br>
-                    <strong style="color: #00ff88;">2. Privacy & Data Processing</strong><br>
-                    Your data is processed locally to manage your interface (Apps, optional Notifications, and Wallpapers). To maintain stability, pseudonymized technical specifications and crash reports are securely transmitted via Google Firebase Crashlytics. No personal data is shared with third parties or ad networks.<br><br>
-                    <strong style="color: #00ff88;">3. Disclaimer</strong><br>
-                    The Services are provided "as is". We are not liable for any system errors or data loss resulting from installation unless caused by gross negligence.
+                
+                <div class="tos-document" style="max-height: 40vh; overflow-y: auto; background: rgba(2, 5, 3, 0.6); padding: 20px; border-radius: 10px; border: 1px solid rgba(0, 255, 136, 0.15); font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 20px; line-height: 1.6;">
+                    
+                    <h3 style="margin-top: 0; font-size: 1.3rem;">Terms of Use ACE Launcher</h3>
+                    <p style="opacity: 0.6; font-size: 0.8rem;">Last Updated: July 1, 2026</p>
+                    <p>Welcome to ACE Launcher. Please read these Terms of Use ("Terms") carefully before using the ACE Launcher application and its associated extensions, plug-ins, or add-ons (collectively, the "Services"). By downloading, installing, or using the Services, you agree to be bound by these Terms. If you do not agree to these Terms, you may not use the Services.</p>
+
+                    <h3>1. License Grant</h3>
+                    <p>We grant you a limited, non-exclusive, non-transferable, and revocable license to use ACE Launcher and its extensions for personal, non-commercial purposes on your Android devices. You are expressly prohibited from:</p>
+                    <ul>
+                        <li>Decompiling, disassembling, or reverse engineering the app or any part thereof, unless explicitly permitted by applicable law.</li>
+                        <li>Using the Services for any illegal, fraudulent, or unauthorized purposes.</li>
+                        <li>Distributing modified versions of the app or copying the app's intellectual property without prior consent.</li>
+                    </ul>
+
+                    <h3>2. Features and Extensions</h3>
+                    <p>ACE Launcher and its extensions are provided free of charge with their current feature set. We reserve the right to modify, update, adapt, or temporarily or permanently discontinue features or extensions at any time.</p>
+
+                    <h3>3. Privacy</h3>
+                    <p>Your privacy is important to us. The collection and processing of personal data are conducted exclusively within the framework of applicable data protection laws. Detailed information can be found in our Privacy Policy below.</p>
+
+                    <h3>4. Disclaimer of Warranties</h3>
+                    <p>The Services are provided "as is" and "as available." We do not guarantee that ACE Launcher will be error-free, uninterrupted, or fully functional on all Android devices. We are not liable for any damages (e.g., data loss, system errors, or impairments to other apps) arising from the installation or use of the app or its extensions on your device, unless caused by our gross negligence or intentional misconduct.</p>
+
+                    <h3>5. Intellectual Property</h3>
+                    <p>All rights, titles, and interests in and to ACE Launcher, including its design, logos, source code, graphical user interface, and extensions, belong exclusively to us (the developers). "ACE Launcher" is a protected designation.</p>
+
+                    <h3>6. Changes to the Terms</h3>
+                    <p>We reserve the right to modify these Terms of Use at any time. If we make changes, we will inform you via an update within the app or through the platform where the app is provided. Continued use of the Services after a modification constitutes acceptance of the new Terms.</p>
+
+                    <h3>7. Governing Law and Contact</h3>
+                    <p>These Terms are governed by the laws of Germany. If you have any questions or feedback regarding ACE Launcher, you can contact us at support.einfynn@gmail.com.</p>
+
+                    <hr style="border-color: rgba(0,255,136,0.1); margin: 30px 0;">
+
+                    <h3 style="font-size: 1.3rem;">Privacy Policy</h3>
+                    <p style="opacity: 0.6; font-size: 0.8rem;">Last Updated: July 1, 2026</p>
+                    <p>The protection of your personal data is a major concern for us. Below, we inform you about how we handle your data when you use ACE Launcher and its extensions (collectively, the "App").</p>
+
+                    <h3>1. Types of Processed Data and Purpose</h3>
+                    <h4>a) Device Permissions and Local Processing</h4>
+                    <p>As a core application for managing your Android user interface, ACE Launcher requires access to certain functions of your device to enable display and organization:</p>
+                    <ul>
+                        <li><strong>Installed Apps:</strong> Required to display and organize your apps on the home screen and in the app drawer.</li>
+                        <li><strong>Notifications (optional):</strong> If enabled, required to display notification badges on app icons.</li>
+                        <li><strong>Storage Access / Wallpapers (optional):</strong> Required to set custom wallpapers or back up your configurations.</li>
+                    </ul>
+
+                    <h4>b) Automatically Collected and Online Processed Data (Usage Data & Analytics)</h4>
+                    <p>The app does not operate entirely locally. To provide certain online functionalities of the extensions, improve stability, and troubleshoot errors, data is transmitted to servers. This includes pseudonymized technical data (e.g., via analytics services like Google Firebase Crashlytics):</p>
+                    <ul>
+                        <li>Device model, operating system version, and technical specifications.</li>
+                        <li>Log data in the event of an app crash (Crash Reports) to locate the error.</li>
+                        <li>Usage statistics regarding the features of the app and its extensions to continuously improve the user experience.</li>
+                    </ul>
+                    <p>The legal basis for this processing is our legitimate interest in ensuring app stability, security, and continuous optimization in accordance with Art. 6 Abs. 1 lit. f GDPR.</p>
+
+                    <h3>2. Sharing Data with Third Parties</h3>
+                    <p>Since no in-app purchases are integrated into the app, no transaction data is shared. Technical data is transferred exclusively to service providers for app analysis and stability monitoring (e.g., Google LLC), if integrated. No personal data is shared with third parties or ad networks for advertising purposes.</p>
+
+                    <h3>3. Your Rights</h3>
+                    <p>Regarding the processed data, you have the following rights under the GDPR:</p>
+                    <ul>
+                        <li>Right of access (Art. 15 GDPR)</li>
+                        <li>Right to rectification or erasure (Art. 16 & 17 GDPR)</li>
+                        <li>Right to restriction of processing (Art. 18 GDPR)</li>
+                        <li>Right to data portability (Art. 20 GDPR)</li>
+                        <li>Right to object to processing (Art. 21 GDPR)</li>
+                    </ul>
+                    <p>However, since we generally do not store directly identifiable personal data (such as names or email addresses) on servers, we are typically unable to assign pseudonymous data to a specific user.</p>
+
+                    <h3>4. Changes to this Privacy Policy</h3>
+                    <p>We reserve the right to adapt this Privacy Policy so that it always complies with current legal requirements or to implement changes to our features. The new Privacy Policy will then apply to your next visit.</p>
+
                 </div>
+                
                 <label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; color: #ffffff; font-size: 0.9rem; margin-bottom: 24px; user-select: none;">
                     <input type="checkbox" id="tos-checkbox" style="margin-top: 3px; width: 16px; height: 16px; accent-color: #00ff88; cursor: pointer;">
                     <span>I have read and agree to the Terms of Use and Privacy Policy.</span>
@@ -636,6 +712,16 @@
 
     <header class="top-header">
         <div class="header-buttons-group">
+            <button class="header-btn" id="open-tos-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                ToS & Privacy
+            </button>
             <a href="mailto:support.einfynn@gmail.com" class="header-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
@@ -867,7 +953,7 @@
                             <div class="ext-info" style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
                                 <div>
                                     <span class="ext-name" style="color: #00ff88; font-weight: 700;">${groupName}</span>
-                                    <span class="ext-desc" style="color: rgba(255,255,255,0.6);">${count} Versions avilable</span>
+                                    <span class="ext-desc" style="color: rgba(255,255,255,0.6);">${count} Versions available</span>
                                 </div>
                                 <span style="font-size: 0.85rem; color: #00ff88; font-weight: 600;">Open</span>
                             </div>
@@ -971,8 +1057,14 @@
 
 
         /* ==========================================
-           3. TIMER MANAGEMENT & TOS FLOW (MODIFIZIERT)
+           3. TIMER MANAGEMENT & TOS FLOW
            ========================================== */
+        const tosModal = document.getElementById('tos-modal');
+        const tosCheckbox = document.getElementById('tos-checkbox');
+        const tosAcceptBtn = document.getElementById('tos-accept-btn');
+        const openTosBtn = document.getElementById('open-tos-btn');
+        const closeTosBtn = document.getElementById('close-tos-btn');
+
         window.addEventListener('load', () => {
             const loader = document.getElementById('loader');
 
@@ -981,9 +1073,8 @@
                 loader.style.visibility = 'hidden';
 
                 setTimeout(() => {
-                    // Überprüfe ob die ToS bereits akzeptiert wurden
                     if (!localStorage.getItem('tosAccepted')) {
-                        tosModal.classList.add('show');
+                        openTos();
                     } else {
                         triggerInfoPopup();
                     }
@@ -1006,11 +1097,33 @@
         }
 
         /* ==========================================
-           4. TERMS OF SERVICE INTERACTION LOGIC (NEU)
+           4. TERMS OF SERVICE INTERACTION LOGIC
            ========================================== */
-        const tosModal = document.getElementById('tos-modal');
-        const tosCheckbox = document.getElementById('tos-checkbox');
-        const tosAcceptBtn = document.getElementById('tos-accept-btn');
+        function openTos() {
+            tosModal.classList.add('show');
+            if (localStorage.getItem('tosAccepted')) {
+                // Falls bereits akzeptiert, kann das Modal einfach wieder geschlossen werden
+                closeTosBtn.style.display = 'block';
+                tosCheckbox.checked = true;
+                tosAcceptBtn.style.opacity = '1';
+                tosAcceptBtn.style.pointerEvents = 'auto';
+                tosAcceptBtn.style.cursor = 'pointer';
+                tosAcceptBtn.textContent = 'Close';
+            } else {
+                // Falls noch nicht akzeptiert, zwinge den Nutzer dazu
+                closeTosBtn.style.display = 'none';
+                tosAcceptBtn.textContent = 'Accept & Continue';
+            }
+        }
+
+        openTosBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openTos();
+        });
+
+        closeTosBtn.addEventListener('click', () => {
+            tosModal.classList.remove('show');
+        });
 
         tosCheckbox.addEventListener('change', () => {
             if (tosCheckbox.checked) {
@@ -1025,9 +1138,14 @@
         });
 
         tosAcceptBtn.addEventListener('click', () => {
+            const wasAccepted = localStorage.getItem('tosAccepted');
             localStorage.setItem('tosAccepted', 'true');
             tosModal.classList.remove('show');
-            triggerInfoPopup();
+            
+            // Nur das Such-Popup triggern, wenn man die Bedingungen das ERSTE Mal akzeptiert
+            if (!wasAccepted) {
+                triggerInfoPopup();
+            }
         });
 
 
