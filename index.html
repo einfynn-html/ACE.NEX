@@ -24,7 +24,7 @@
             overflow-x: hidden;
         }
 
-        /* --- LOADING SCREEN --- */
+        /* --- PURE MINIMALIST BLACK & WHITE LOADING SCREEN --- */
         #loader {
             position: fixed;
             inset: 0;
@@ -148,7 +148,7 @@
             box-shadow: 0 12px 30px rgba(0, 255, 136, 0.4);
         }
 
-        /* --- INFO POPUP --- */
+        /* --- LARGER & MODERN INFO POPUP --- */
         #info-popup {
             position: fixed;
             top: 40px;
@@ -270,7 +270,7 @@
             transform: translateY(-2px);
         }
 
-        /* --- MODALS --- */
+        /* --- EXTENSIONS MODAL --- */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -347,6 +347,7 @@
             overflow-y: auto;
         }
 
+        /* --- TOS TEXT STYLING --- */
         .tos-text-content {
             color: rgba(255, 255, 255, 0.85);
             font-size: 0.95rem;
@@ -604,6 +605,10 @@
             background: rgba(0, 255, 136, 0.08);
             border: 1px solid rgba(0, 255, 136, 0.2);
         }
+        
+        .dropdown-item.current-highlight:hover {
+            background: rgba(0, 255, 136, 0.18);
+        }
 
         .dropdown-section-title {
             font-size: 0.75rem;
@@ -645,45 +650,55 @@
             color: #628a73;
         }
 
+        /* --- RESPONSIVE OPTIMIZATION --- */
         @media (max-width: 900px) {
             .top-header { 
                 padding: 20px 6%; 
                 justify-content: center;
             }
+            
             .header-btn {
                 padding: 10px 18px;
                 font-size: 0.9rem;
             }
+
             .main-content {
                 padding: 40px 6% 20px 6%;
                 justify-content: center;
             }
+            
             .bottom-bar { 
                 flex-direction: column-reverse; 
                 align-items: center; 
                 padding: 20px 6% 30px 6%; 
                 gap: 24px; 
             }
+            
             .footer-left { 
                 flex-direction: column; 
                 align-items: center; 
                 width: 100%; 
                 gap: 16px; 
             }
+            
             .buttons-group { 
                 width: 100%; 
                 flex-direction: column; 
             }
+            
             .download-btn, .versions-btn { 
                 width: 100%; 
                 justify-content: center; 
             }
+            
             .versions-dropdown { 
                 width: 100%; 
             }
+            
             .apk-info {
                 text-align: center;
             }
+            
             .branding { 
                 text-align: center; 
                 width: 100%; 
@@ -733,7 +748,8 @@
                 <h2>Extensions</h2>
                 <button class="close-modal-btn" id="close-extensions-btn">&times;</button>
             </div>
-            <div class="modal-body" id="extensions-list"></div>
+            <div class="modal-body" id="extensions-list">
+            </div>
         </div>
     </div>
 
@@ -746,8 +762,65 @@
             <div class="modal-body tos-text-content">
                 <h2>Terms of Use — ACE Launcher</h2>
                 <p><small>Last Updated: July 1, 2026</small></p>
-                <p>Welcome to ACE Launcher...</p>
-                </div>
+                <p>Welcome to ACE Launcher. Please read these Terms of Use ("Terms") carefully before using the ACE Launcher application and its associated extensions, plug-ins, or add-ons (collectively, the "Services"). By downloading, installing, or using the Services, you agree to be bound by these Terms.</p>
+                
+                <h3>1. License Grant</h3>
+                <p>We grant you a limited, non-exclusive, non-transferable, and revocable license to use ACE Launcher and its extensions for personal, non-commercial purposes on your Android devices. You are expressly prohibited from:</p>
+                <ul>
+                    <li>Decompiling, disassembling, or reverse engineering the app or any part thereof, unless explicitly permitted by applicable law.</li>
+                    <li>Using the Services for any illegal, fraudulent, or unauthorized purposes.</li>
+                    <li>Distributing modified versions of the app or copying the app's intellectual property without prior consent.</li>
+                </ul>
+
+                <h3>2. Features and Extensions</h3>
+                <p>ACE Launcher and its extensions are provided free of charge with their current feature set. We reserve the right to modify, update, adapt, or temporarily or permanently discontinue features or extensions at any time.</p>
+
+                <h3>3. Privacy</h3>
+                <p>Your privacy is important to us. The collection and processing of personal data are conducted exclusively within the framework of applicable data protection laws. Detailed information can be found in our Privacy Policy below.</p>
+
+                <h3>4. Disclaimer of Warranties</h3>
+                <p>The Services are provided "as is" and "as available." We do not guarantee that ACE Launcher will be error-free, uninterrupted, or fully functional on all Android devices. We are not liable for any damages (e.g., data loss, system errors, or impairments to other apps) arising from the installation or use of the app or its extensions on your device, unless caused by our gross negligence or intentional misconduct.</p>
+
+                <h3>5. Intellectual Property</h3>
+                <p>All rights, titles, and interests in and to ACE Launcher, including its design, logos, source code, graphical user interface, and extensions, belong exclusively to us (the developers). "ACE Launcher" is a protected designation.</p>
+
+                <h3>6. Changes to the Terms</h3>
+                <p>We reserve the right to modify these Terms of Use at any time. If we make changes, we will inform you via an update within the app or through the platform where the app is provided. Continued use of the Services after a modification constitutes acceptance of the new Terms.</p>
+
+                <h3>7. Governing Law and Contact</h3>
+                <p>These Terms are governed by the laws of Germany. If you have any questions or feedback regarding ACE Launcher, you can contact us at support.einfynn@gmail.com.</p>
+
+                <hr style="border: 0; border-top: 1px solid rgba(0, 255, 136, 0.1); margin: 30px 0;">
+
+                <h2>Privacy Policy</h2>
+                <p><small>Last Updated: July 1, 2026</small></p>
+                <p>The protection of your personal data is a major concern for us. Below, we inform you about how we handle your data when you use ACE Launcher and its extensions (collectively, the "App").</p>
+
+                <h3>1. Types of Processed Data and Purpose</h3>
+                <p><strong>a) Device Permissions and Local Processing</strong><br>As a core application for managing your Android user interface, ACE Launcher requires access to certain functions of your device to enable display and organization:</p>
+                <ul>
+                    <li>Installed Apps: Required to display and organize your apps on the home screen and in the app drawer.</li>
+                    <li>Notifications (optional): If enabled, required to display notification badges on app icons.</li>
+                    <li>Storage Access / Wallpapers (optional): Required to set custom wallpapers or back up your configurations.</li>
+                </ul>
+
+                <p><strong>b) Automatically Collected and Online Processed Data (Usage Data & Analytics)</strong><br>The app does not operate entirely locally. To provide certain online functionalities of the extensions, improve stability, and troubleshoot errors, data is transmitted to servers. This includes pseudonymized technical data (e.g., via analytics services like Google Firebase Crashlytics):</p>
+                <ul>
+                    <li>Device model, operating system version, and technical specifications.</li>
+                    <li>Log data in the event of an app crash (Crash Reports) to locate the error.</li>
+                    <li>Usage statistics regarding the features of the app and its extensions to continuously improve the user experience.</li>
+                </ul>
+                <p>The legal basis for this processing is our legitimate interest in ensuring app stability, security, and continuous optimization in accordance with Art. 6 Abs. 1 lit. f GDPR.</p>
+
+                <h3>2. Sharing Data with Third Parties</h3>
+                <p>Since no in-app purchases are integrated into the app, no transaction data is shared. Technical data is transferred exclusively to service providers for app analysis and stability monitoring (e.g., Google LLC), if integrated. No personal data is shared with third parties or ad networks for advertising purposes.</p>
+
+                <h3>3. Your Rights</h3>
+                <p>Regarding the processed data, you have the following rights under the GDPR: Right of access (Art. 15 GDPR), Right to rectification or erasure (Art. 16 & 17 GDPR), Right to restriction of processing (Art. 18 GDPR), Right to data portability (Art. 20 GDPR), Right to object to processing (Art. 21 GDPR). However, since we generally do not store directly identifiable personal data (such as names or email addresses) on servers, we are typically unable to assign pseudonymous data to a specific user.</p>
+
+                <h3>4. Changes to this Privacy Policy</h3>
+                <p>We reserve the right to adapt this Privacy Policy so that it always complies with current legal requirements or to implement changes to our features. The new Privacy Policy will then apply to your next visit.</p>
+            </div>
         </div>
     </div>
 
@@ -756,55 +829,149 @@
 
     <header class="top-header">
         <div class="header-buttons-group">
-            <button id="tos-toggle-btn" class="header-btn">Terms & Privacy</button>
-            <a href="mailto:support.einfynn@gmail.com" class="header-btn">Support</a>
+            <button id="tos-toggle-btn" class="header-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Terms & Privacy
+            </button>
+            <a href="mailto:support.einfynn@gmail.com" class="header-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                Support
+            </a>
         </div>
     </header>
 
     <main class="main-content">
         <h1 class="title">ACE<br>Launcher</h1>
-        <p class="subtitle">The intelligent dashboard experience for your Android smartphone...</p>
+        <p class="subtitle">The intelligent dashboard experience for your Android smartphone. Featuring a minimalist design, it is entirely free from ads and microtransactions. The sole focus is on your personal customization.<br><br>This Launcher and extensions are for → ANDROID 7.O ↑</p>
     </main>
 
     <footer class="bottom-bar">
         <div class="footer-left">
             <div class="buttons-group">
-                <a href="#" id="main-download-btn" class="download-btn">Start Download</a>
-                <button class="versions-btn" id="versions-toggle-btn">Builds</button>
-                <button id="extensions-toggle-btn" class="versions-btn">Extensions</button>
+                <a href="#" id="main-download-btn" class="download-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Start Download
+                </a>
+                
+                <button class="versions-btn" id="versions-toggle-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="4" y1="6" x2="20" y2="6"></line>
+                        <line x1="4" y1="12" x2="20" y2="12"></line>
+                        <line x1="4" y1="18" x2="20" y2="18"></line>
+                    </svg>
+                    Builds
+                </button>
+
+                <button id="extensions-toggle-btn" class="versions-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Extensions
+                </button>
+
                 <div class="versions-dropdown" id="versions-menu"></div>
             </div>
+            
             <div class="apk-info" id="main-apk-info">
                 <span class="apk-name" id="main-apk-title">Analyzing archive...</span>
                 <span class="apk-meta" id="main-apk-details">Searching for available builds...</span>
             </div>
         </div>
+
+        <div class="branding">
+            Security Notice:<br>Download ACE Launcher <span>exclusively through this website</span>.
+        </div>
     </footer>
 
-     <script>
+    <script>
+        /* ==========================================
+           1. AUTOMATIC APK MANAGEMENT & SORTING
+           ========================================== */
         const apkFiles = [
-             "ACE Launcher 1.0.2.0.apk", "ACE Launcher 1.0.1.3.apk", "ACE Launcher 1.0.1.2.apk"
-        ];
-        const extensionFiles = [
-             "Deploy NEWS 1.0.1.0.apk", "ACE Weather 1.0.1.0.apk"
+             "ACE Launcher 1.0.2.0.apk",
+             "ACE Launcher 1.0.1.3.apk",
+             "ACE Launcher 1.0.1.2.apk",
+             "ACE Launcher 1.0.1.1.apk",
+             "ACE Launcher Release 1.0.1.0.apk",
+             "ACE Launcher 1.0.0.38.apk",
+             "ACE Launcher 1.0.0.37.apk",
+             "ACE Launcher 1.0.0.36.apk",
+             "ACE Launcher 1.0.0.35.apk",
+             "ACE Launcher 1.0.0.34.apk",
+             "ACE Launcher 1.0.0.33.apk",
+             "ACE Launcher 1.0.0.30.apk",
+             "ACE Launcher 1.0.0.29.apk",
+             "ACE Launcher 1.0.0.28.apk",
+             "ACE Launcher 1.0.0.27.apk",
+             "ACE Launcher 1.0.0.26.apk",
+             "ACE Launcher 1.0.0.25.apk",
+             "ACE Launcher 1.0.0.24.apk",
+             "ACE Launcher 1.0.0.23.apk",
+             "ACE Launcher 1.0.0.22.apk",
+             "ACE Launcher 1.0.0.21.apk",
+             "ACE Launcher 1.0.0.20.apk",
+             "ACE Launcher 1.0.0.19.apk",
+             "ACE Launcher 1.0.0.18.apk",
+             "ACE Launcher 1.0.0.17.apk",
+             "ACE Launcher 1.0.0.16.apk",
+             "ACE Launcher 1.0.0.15.apk",
+             "ACE Launcher 1.0.0.14.apk",
         ];
 
-        // WICHTIG: Ändere diese Zahl (z. B. auf 2, 3, etc.), wenn du die Seite auf GitHub 
-        // aktualisierst und möchtest, dass JEDER das Pop-up noch einmal sieht!
+        const extensionFiles = [
+             "Deploy NEWS 1.0.1.0.apk",
+             "ACE Weather 1.0.1.0.apk",
+        ];
+
+        // GITHUB VERSIONSKONTROLLE FÜR DAS POPUP
+        // Wenn du die Bedingungen änderst, erhöhe diese Zahl (z.B. "2"), damit das Popup erneut erscheint.
         const CURRENT_WEBSITE_VERSION = "1"; 
 
         function extractVersion(filename) {
             const match = filename.match(/(\d+\.\d+\.\d+\.\d+|\d+\.\d+\.\d+)/);
             return match ? match[0] : "0.0.0";
         }
+
         function formatCleanName(filename) {
-            return filename.replace(/\.apk$/i, '').replace('Launcehr', 'Launcher');
+            return filename
+                .replace(/\.apk$/i, '')
+                .replace('Launcehr', 'Launcher');
         }
+
         function getBaseName(filename) {
             return filename.replace(/\s*\d+\.\d+\.\d+(\.\d+)?\.apk$/i, '').trim();
         }
 
-        // Dropdown Logic
+        function sortApks(a, b) {
+            const vA = extractVersion(a).split('.').map(Number);
+            const vB = extractVersion(b).split('.').map(Number);
+            for (let i = 0; i < Math.max(vA.length, vB.length); i++) {
+                const numA = vA[i] || 0;
+                const numB = vB[i] || 0;
+                if (numA !== numB) return numB - numA; 
+            }
+            return 0;
+        }
+
+        apkFiles.sort(sortApks);
+        extensionFiles.sort(sortApks);
+
         const mainDownloadBtn = document.getElementById('main-download-btn');
         const mainApkTitle = document.getElementById('main-apk-title');
         const mainApkDetails = document.getElementById('main-apk-details');
@@ -814,19 +981,224 @@
 
         if (apkFiles.length > 0) {
             const latestApk = apkFiles[0];
+            const latestVersion = extractVersion(latestApk);
+
             mainDownloadBtn.href = latestApk;
             mainDownloadBtn.setAttribute('download', latestApk);
             mainApkTitle.textContent = formatCleanName(latestApk);
-            mainApkDetails.textContent = `Latest Version v${extractVersion(latestApk)} • Stable`;
+            mainApkDetails.textContent = `Latest Version v${latestVersion} • Stable`;
+            
+            popupTextContent.innerHTML = `Newest Release <span style="color:#ffffff;">${latestApk}</span>`;
+
+            const currentItem = document.createElement('a');
+            currentItem.href = latestApk;
+            currentItem.setAttribute('download', latestApk);
+            currentItem.classList.add('dropdown-item', 'current-highlight');
+            currentItem.innerHTML = `
+                <span style="font-weight: 600; color: #00ff88;">Recommended (v${latestVersion})</span>
+                <span class="latest-badge">Active</span>
+            `;
+            versionsMenu.appendChild(currentItem);
+
+            const sectionTitle = document.createElement('div');
+            sectionTitle.classList.add('dropdown-section-title');
+            sectionTitle.textContent = "Version History";
+            versionsMenu.appendChild(sectionTitle);
+
+            apkFiles.forEach((apk, index) => {
+                const versionNum = extractVersion(apk);
+                const item = document.createElement('a');
+                item.href = apk;
+                item.setAttribute('download', apk);
+                item.classList.add('dropdown-item');
+                
+                item.innerHTML = `
+                    <span>Version ${versionNum}</span>
+                    ${index === 0 ? '<span style="color: #00ff88; font-size:0.85rem; font-weight:600;">New</span>' : '<span style="opacity:0.4; font-size:0.85rem;">APK</span>'}
+                `;
+                versionsMenu.appendChild(item);
+            });
         }
 
         versionsToggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             versionsMenu.classList.toggle('show');
         });
-        document.addEventListener('click', () => versionsMenu.classList.remove('show'));
 
-        // Load & Overlay Control
+        document.addEventListener('click', () => {
+            versionsMenu.classList.remove('show');
+        });
+
+        /* ==========================================
+           2. EXTENSIONS MODAL MENU (GROUPS & VERSIONS)
+           ========================================== */
+        const extensionsModal = document.getElementById('extensions-modal');
+        const extensionsToggleBtn = document.getElementById('extensions-toggle-btn');
+        const closeExtensionsBtn = document.getElementById('close-extensions-btn');
+        const extensionsList = document.getElementById('extensions-list');
+        
+        function renderExtensions(selectedGroup = null) {
+            if (extensionFiles.length === 0) {
+                extensionsList.innerHTML = `<div class="placeholder-text">Coming soon... No extensions available yet.</div>`;
+                return;
+            }
+
+            const groupedExtensions = {};
+            extensionFiles.forEach(file => {
+                const baseName = getBaseName(file);
+                if (!groupedExtensions[baseName]) {
+                    groupedExtensions[baseName] = [];
+                }
+                groupedExtensions[baseName].push(file);
+            });
+
+            if (!selectedGroup) {
+                let html = '<div class="extensions-grid" style="grid-template-columns: 1fr; gap: 12px;">';
+                
+                Object.keys(groupedExtensions).forEach(groupName => {
+                    const files = groupedExtensions[groupName];
+                    const count = files.length;
+                    
+                    html += `
+                        <div class="extension-card group-card" data-group="${groupName}" style="border-color: #00ff88; background: rgba(0, 255, 136, 0.05);">
+                            <div class="ext-icon" style="background: rgba(0, 255, 136, 0.1);">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                            </div>
+                            <div class="ext-info" style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
+                                <div>
+                                    <span class="ext-name" style="color: #00ff88; font-weight: 700;">${groupName}</span>
+                                    <span class="ext-desc" style="color: rgba(255,255,255,0.6);">${count} Version${count > 1 ? 'en' : ''} available</span>
+                                </div>
+                                <span style="font-size: 0.85rem; color: #00ff88; font-weight: 600;">Open</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                extensionsList.innerHTML = html;
+
+                document.querySelectorAll('.group-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const group = card.getAttribute('data-group');
+                        renderExtensions(group);
+                    });
+                });
+
+            } else {
+                const files = groupedExtensions[selectedGroup];
+                
+                let html = `
+                    <button class="back-btn" id="back-to-groups-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                         Back
+                    </button>
+                    <div class="extensions-grid" style="grid-template-columns: 1fr; gap: 12px;">
+                `;
+
+                files.forEach((ext, index) => {
+                    const versionNum = extractVersion(ext);
+                    const cleanName = formatCleanName(ext);
+                    
+                    if (index === 0) {
+                        html += `
+                            <a href="${ext}" download="${ext}" class="extension-card" style="border-color: #00ff88; background: rgba(0, 255, 136, 0.1);">
+                                <div class="ext-icon" style="background: rgba(0, 255, 136, 0.2);">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                </div>
+                                <div class="ext-info" style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
+                                    <div>
+                                        <span class="ext-name" style="color: #ffffff; font-weight: 700;">${cleanName}</span>
+                                        <span class="ext-desc" style="color: #00ff88;">Version ${versionNum} (Featured)</span>
+                                    </div>
+                                    <span class="latest-badge">New</span>
+                                </div>
+                            </a>
+                        `;
+                    } else {
+                        html += `
+                            <a href="${ext}" download="${ext}" class="extension-card">
+                                <div class="ext-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#628a73" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                </div>
+                                <div class="ext-info" style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
+                                    <div>
+                                        <span class="ext-name">${cleanName}</span>
+                                        <span class="ext-desc">Version ${versionNum}</span>
+                                    </div>
+                                    <span style="opacity: 0.5; font-size: 0.85rem;">APK</span>
+                                </div>
+                            </a>
+                        `;
+                    }
+                });
+
+                html += '</div>';
+                extensionsList.innerHTML = html;
+
+                document.getElementById('back-to-groups-btn').addEventListener('click', () => {
+                    renderExtensions(null);
+                });
+            }
+        }
+
+        extensionsToggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            renderExtensions(null);
+            extensionsModal.classList.add('show');
+        });
+
+        closeExtensionsBtn.addEventListener('click', () => {
+            extensionsModal.classList.remove('show');
+        });
+
+        extensionsModal.addEventListener('click', (e) => {
+            if (e.target === extensionsModal) {
+                extensionsModal.classList.remove('show');
+            }
+        });
+
+        /* ==========================================
+           2.5 TOS MODAL INTERACTION
+           ========================================== */
+        const tosModal = document.getElementById('tos-modal');
+        const tosToggleBtn = document.getElementById('tos-toggle-btn');
+        const closeTosBtn = document.getElementById('close-tos-btn');
+
+        tosToggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            tosModal.classList.add('show');
+        });
+
+        closeTosBtn.addEventListener('click', () => {
+            tosModal.classList.remove('show');
+        });
+
+        tosModal.addEventListener('click', (e) => {
+            if (e.target === tosModal) {
+                tosModal.classList.remove('show');
+            }
+        });
+
+        /* ==========================================
+           3. TIMER MANAGEMENT (LOADER, MANDATORY POPUP & POPUP)
+           ========================================== */
         window.addEventListener('load', () => {
             const loader = document.getElementById('loader');
             const popup = document.getElementById('info-popup');
@@ -838,20 +1210,19 @@
                 loader.style.visibility = 'hidden';
 
                 setTimeout(() => {
-                    // Prüft, ob der Nutzer schon die AKTUELLSTE Version akzeptiert hat
-                    const acceptedVersion = localStorage.getItem('tos_accepted_version');
-                    
+                    // Prüft, ob die lokal akzeptierte Version mit der aktuellen GitHub-Version übereinstimmt
+                    const acceptedVersion = localStorage.getItem('tos_accepted_version_ace_launcher');
                     if (acceptedVersion !== CURRENT_WEBSITE_VERSION) {
                         mandatoryModal.classList.add('show');
                     } else {
                         showNotificationPopup();
                     }
-                }, 400);
-            }, 3000);
+                }, 400); 
+
+            }, 3000); 
 
             acceptTosBtn.addEventListener('click', () => {
-                // Speichert die aktuelle Versionsnummer im Browser des Nutzers
-                localStorage.setItem('tos_accepted_version', CURRENT_WEBSITE_VERSION);
+                localStorage.setItem('tos_accepted_version_ace_launcher', CURRENT_WEBSITE_VERSION);
                 mandatoryModal.classList.remove('show');
                 setTimeout(showNotificationPopup, 400);
             });
@@ -860,23 +1231,134 @@
                 popup.classList.add('show');
                 setTimeout(() => {
                     popup.classList.add('fade-out');
-                    setTimeout(() => popup.classList.remove('show', 'fade-out'), 500);
+                    setTimeout(() => {
+                        popup.classList.remove('show', 'fade-out');
+                    }, 500); 
                 }, 5000);
             }
         });
 
-        // Background Animation Setup
+        /* ==========================================
+           4. ANIMATED & INTERACTIVE BACKGROUND (ORIGINAL 130 SQUARES)
+           ========================================== */
         const container = document.getElementById('squares-container');
-        for (let i = 0; i < 50; i++) {
+        const greenColors = ['#04120a', '#0a2413', '#11351c', '#1b4d2a', '#286e3d', '#3d9c5b', '#00ff88'];
+        const purpleColors = ['#2b061a', '#4a0a2c', '#1c051a'];
+        const totalSquares = 130;
+        const squaresData = [];
+
+        for (let i = 0; i < totalSquares; i++) {
             const square = document.createElement('div');
             square.classList.add('sq');
-            square.style.left = Math.random() * 100 + '%';
-            square.style.top = Math.random() * 100 + '%';
-            square.style.width = square.style.height = (Math.random() * 100 + 40) + 'px';
-            square.style.backgroundColor = 'rgba(0, 255, 136, 0.1)';
-            container.appendChild(square);
-        }
-    </script>
 
+            const posX = Math.random() * 120 - 10;
+            const posY = Math.random() * 120 - 10;
+            square.style.left = posX + '%';
+            square.style.top = posY + '%';
+
+            const size = Math.floor(Math.random() * 160) + 60;
+            square.style.width = size + 'px';
+            square.style.height = size + 'px';
+
+            let colorPool = greenColors;
+            if (posX < 35 && posY < 45 && Math.random() > 0.3) {
+                colorPool = purpleColors;
+            } else if (Math.random() > 0.92) { 
+                colorPool = purpleColors;
+            }
+            square.style.backgroundColor = colorPool[Math.floor(Math.random() * colorPool.length)];
+
+            const driftX = (Math.random() * 60 - 30) + 'px';
+            const driftY = (Math.random() * 60 - 30) + 'px';
+            const driftRot = (Math.random() * 30 - 15) + 'deg';
+            const baseOpacity = (Math.random() * 0.4 + 0.35);
+
+            square.style.setProperty('--drift-x', driftX);
+            square.style.setProperty('--drift-y', driftY);
+            square.style.setProperty('--drift-rot', driftRot);
+            square.style.setProperty('--base-opacity', baseOpacity);
+
+            square.style.animationDuration = (Math.random() * 12 + 10) + 's';
+            square.style.animationDelay = '-' + (Math.random() * 20) + 's';
+
+            container.appendChild(square);
+            
+            squaresData.push({
+                el: square,
+                x: posX,
+                y: posY,
+                size: size,
+                depth: Math.random() * 1.5 + 0.5,
+                currentIx: 0,
+                currentIy: 0
+            });
+        }
+
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let targetMouseX = mouseX;
+        let targetMouseY = mouseY;
+
+        document.addEventListener('mousemove', (e) => {
+            targetMouseX = e.clientX;
+            targetMouseY = e.clientY;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if(e.touches.length > 0) {
+                targetMouseX = e.touches[0].clientX;
+                targetMouseY = e.touches[0].clientY;
+            }
+        });
+
+        function animateInteractivity() {
+            mouseX += (targetMouseX - mouseX) * 0.1;
+            mouseY += (targetMouseY - mouseY) * 0.1;
+
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
+
+            squaresData.forEach(data => {
+                const sqCenterX = (data.x / 100) * winW + (data.size / 2);
+                const sqCenterY = (data.y / 100) * winH + (data.size / 2);
+
+                const dx = mouseX - sqCenterX;
+                const dy = mouseY - sqCenterY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                let repelX = 0;
+                let repelY = 0;
+                const repelRadius = 180;
+
+                if (dist < repelRadius) {
+                    const force = (repelRadius - dist) / repelRadius;
+                    repelX = -(dx / dist) * force * 50;
+                    repelY = -(dy / dist) * force * 50;
+                    
+                    data.el.style.filter = `brightness(1.6) drop-shadow(0 0 10px ${data.el.style.backgroundColor})`;
+                    data.el.style.zIndex = "10";
+                } else {
+                    data.el.style.filter = 'none';
+                    data.el.style.zIndex = "1";
+                }
+
+                const parallaxX = ((mouseX / winW) - 0.5) * -60 * data.depth;
+                const parallaxY = ((mouseY / winH) - 0.5) * -60 * data.depth;
+
+                const targetIx = parallaxX + repelX;
+                const targetIy = parallaxY + repelY;
+
+                data.currentIx += (targetIx - data.currentIx) * 0.15;
+                data.currentIy += (targetIy - data.currentIy) * 0.15;
+
+                data.el.style.setProperty('--ix', `${data.currentIx}px`);
+                data.el.style.setProperty('--iy', `${data.currentIy}px`);
+            });
+
+            requestAnimationFrame(animateInteractivity);
+        }
+        
+        animateInteractivity();
+    </script>
 </body>
 </html>
