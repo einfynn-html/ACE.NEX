@@ -1282,5 +1282,16 @@
         
         animateInteractivity();
     </script>
+    <script>
+function notifyApp(fileName) {
+    fetch('https://ntfy.sh/einfynn_ace_nex_downloads', {
+        method: 'POST',
+        body: 'Download: ' + fileName
+    });
+}
+</script>
+
+<!-- Beispiel für deinen Button -->
+<a href="pfad/zu/deiner.apk" onclick="notifyApp('ACE_Launcher.apk')">Download</a>
 </body>
 </html>
