@@ -790,7 +790,10 @@
             fetch('https://ntfy.sh/einfynn_ace_nex_downloads', {
                 method: 'POST',
                 body: 'Download: ' + fileName,
-                headers: { 'Title': 'ACE.NEX Download' }
+                headers: { 
+                    'Title': 'ACE.NEX Download',
+                    'Tags': 'package'
+                }
             }).catch(e => console.log("Notify error"));
         }
 
@@ -887,8 +890,9 @@
 
             mainDownloadBtn.href = latestApk;
             mainDownloadBtn.setAttribute('download', latestApk);
+            // TRIGGER APP
             mainDownloadBtn.addEventListener('click', () => notifyApp(latestApk));
-            
+
             mainApkTitle.textContent = formatCleanName(latestApk);
             mainApkDetails.textContent = `Latest Version v${latestVersion} • Stable`;
             
@@ -902,6 +906,7 @@
                 <span style="font-weight: 600; color: #00ff88;">Recommended (v${latestVersion})</span>
                 <span class="latest-badge">Active</span>
             `;
+            // TRIGGER APP
             currentItem.addEventListener('click', () => notifyApp(latestApk));
             versionsMenu.appendChild(currentItem);
 
@@ -921,6 +926,7 @@
                     <span>Version ${versionNum}</span>
                     ${index === 0 ? '<span style="color: #00ff88; font-size:0.85rem; font-weight:600;">New</span>' : '<span style="opacity:0.4; font-size:0.85rem;">APK</span>'}
                 `;
+                // TRIGGER APP
                 item.addEventListener('click', () => notifyApp(apk));
                 versionsMenu.appendChild(item);
             });
@@ -1030,7 +1036,7 @@
                                         <span class="ext-name" style="color: #ffffff; font-weight: 700;">${cleanName}</span>
                                         <span class="ext-desc" style="color: #00ff88;">Version ${versionNum} (Featured)</span>
                                     </div>
-                                    <span class="latest-badge">Neu</span>
+                                    <span class="latest-badge">New</span>
                                 </div>
                             </a>
                         `;
@@ -1128,7 +1134,6 @@
         function openTos() {
             tosModal.classList.add('show');
             if (localStorage.getItem('tosAccepted')) {
-                // Falls bereits akzeptiert, kann das Modal einfach wieder geschlossen werden
                 closeTosBtn.style.display = 'block';
                 tosCheckbox.checked = true;
                 tosAcceptBtn.style.opacity = '1';
@@ -1136,7 +1141,6 @@
                 tosAcceptBtn.style.cursor = 'pointer';
                 tosAcceptBtn.textContent = 'Close';
             } else {
-                // Falls noch nicht akzeptiert, zwinge den Nutzer dazu
                 closeTosBtn.style.display = 'none';
                 tosAcceptBtn.textContent = 'Accept & Continue';
             }
@@ -1167,11 +1171,7 @@
             const wasAccepted = localStorage.getItem('tosAccepted');
             localStorage.setItem('tosAccepted', 'true');
             tosModal.classList.remove('show');
-            
-            // Nur das Such-Popup triggern, wenn man die Bedingungen das ERSTE Mal akzeptiert
-            if (!wasAccepted) {
-                triggerInfoPopup();
-            }
+            if (!wasAccepted) triggerInfoPopup();
         });
 
 
