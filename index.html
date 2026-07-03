@@ -784,6 +784,17 @@
 
     <script>
         /* ==========================================
+           0. NOTIFICATION SYSTEM
+           ========================================== */
+        function notifyApp(fileName) {
+            fetch('https://ntfy.sh/einfynn_ace_nex_downloads', {
+                method: 'POST',
+                body: 'Download: ' + fileName,
+                headers: { 'Title': 'ACE.NEX Download' }
+            }).catch(e => console.log("Notify error"));
+        }
+
+        /* ==========================================
            1. AUTOMATIC APK MANAGEMENT & SORTING
            ========================================== */
         
@@ -876,6 +887,8 @@
 
             mainDownloadBtn.href = latestApk;
             mainDownloadBtn.setAttribute('download', latestApk);
+            mainDownloadBtn.addEventListener('click', () => notifyApp(latestApk));
+            
             mainApkTitle.textContent = formatCleanName(latestApk);
             mainApkDetails.textContent = `Latest Version v${latestVersion} • Stable`;
             
@@ -889,6 +902,7 @@
                 <span style="font-weight: 600; color: #00ff88;">Recommended (v${latestVersion})</span>
                 <span class="latest-badge">Active</span>
             `;
+            currentItem.addEventListener('click', () => notifyApp(latestApk));
             versionsMenu.appendChild(currentItem);
 
             const sectionTitle = document.createElement('div');
@@ -907,6 +921,7 @@
                     <span>Version ${versionNum}</span>
                     ${index === 0 ? '<span style="color: #00ff88; font-size:0.85rem; font-weight:600;">New</span>' : '<span style="opacity:0.4; font-size:0.85rem;">APK</span>'}
                 `;
+                item.addEventListener('click', () => notifyApp(apk));
                 versionsMenu.appendChild(item);
             });
         }
@@ -1002,7 +1017,7 @@
                     
                     if (index === 0) {
                         html += `
-                            <a href="${ext}" download="${ext}" class="extension-card" style="border-color: #00ff88; background: rgba(0, 255, 136, 0.1);">
+                            <a href="${ext}" download="${ext}" class="extension-card" onclick="notifyApp('${ext}')" style="border-color: #00ff88; background: rgba(0, 255, 136, 0.1);">
                                 <div class="ext-icon" style="background: rgba(0, 255, 136, 0.2);">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1021,7 +1036,7 @@
                         `;
                     } else {
                         html += `
-                            <a href="${ext}" download="${ext}" class="extension-card">
+                            <a href="${ext}" download="${ext}" onclick="notifyApp('${ext}')" class="extension-card">
                                 <div class="ext-icon">
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#628a73" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -1282,16 +1297,5 @@
         
         animateInteractivity();
     </script>
-    <script>
-function notifyApp(fileName) {
-    fetch('https://ntfy.sh/einfynn_ace_nex_downloads', {
-        method: 'POST',
-        body: 'Download: ' + fileName
-    });
-}
-</script>
-
-<!-- Beispiel für deinen Button -->
-<a href="pfad/zu/deiner.apk" onclick="notifyApp('ACE_Launcher.apk')">Download</a>
 </body>
 </html>
