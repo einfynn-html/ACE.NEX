@@ -1,1305 +1,1121 @@
+package com.example.aceupdates
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ACE NEX — The only Launcher you need</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;700&display=swap');
+import android.app.DownloadManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.work.*
+import com.example.aceupdates.ui.theme.ACEUpdatesTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.io.File
+import java.util.concurrent.TimeUnit
+import kotlin.math.sin
+import kotlin.math.sqrt
+import kotlin.random.Random
 
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-        }
+@Serializable
+data class GithubFile(
+    val name: String,
+    val download_url: String?,
+    val type: String
+)
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #020503;
-            color: #ffffff;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow-x: hidden;
-        }
+data class AppUpdate(
+    val appName: String,
+    val version: String,
+    val file: GithubFile
+)
 
-        /* --- PURE MINIMALIST BLACK & WHITE LOADING SCREEN --- */
-        #loader {
-            position: fixed;
-            inset: 0;
-            background: #000000;
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
-        }
+sealed class DownloadStatus {
+    data class Downloading(val progress: Float, val fileName: String) : DownloadStatus()
+    data class Completed(val uri: Uri) : DownloadStatus()
+    data class Error(val message: String) : DownloadStatus()
+}
 
-        .loader-text {
-            font-family: 'Space Grotesk', sans-serif;
-            color: #ffffff;
-            font-size: 2.5rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
+fun compareVersions(v1: String, v2: String): Int {
+    val parts1 = v1.split('.').mapNotNull { it.toIntOrNull() }
+    val parts2 = v2.split('.').mapNotNull { it.toIntOrNull() }
+    
+    val length = maxOf(parts1.size, parts2.size)
+    for (i in 0 until length) {
+        val p1 = parts1.getOrElse(i) { 0 }
+        val p2 = parts2.getOrElse(i) { 0 }
+        if (p1 != p2) return p1.compareTo(p2)
+    }
+    return 0
+}
 
-        /* --- LARGER & MODERN INFO POPUP --- */
-        #info-popup {
-            position: fixed;
-            top: 40px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-20px);
-            background: rgba(4, 18, 11, 0.85);
-            border: 2px solid rgba(0, 255, 136, 0.4);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            padding: 22px 40px;
-            border-radius: 18px;
-            z-index: 1000;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 255, 136, 0.15);
-            opacity: 0;
-            visibility: hidden;
-            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease;
-            pointer-events: none;
-            text-align: center;
-            max-width: 90%;
-            min-width: 320px;
-        }
+fun parseApkName(file: GithubFile): AppUpdate {
+    val regex = Regex("""(.+?)[_\s-]v?(\d+(?:\.\d+)+.*)\.apk""", RegexOption.IGNORE_CASE)
+    val matchResult = regex.find(file.name)
+    
+    return if (matchResult != null) {
+        val (name, version) = matchResult.destructured
+        AppUpdate(name.replace("_", " ").trim(), version, file)
+    } else {
+        AppUpdate(file.name.removeSuffix(".apk").replace("_", " "), "Unknown", file)
+    }
+}
 
-        #info-popup.show {
-            opacity: 1;
-            visibility: visible;
-            transform: translateX(-50%) translateY(0);
-        }
+class MainViewModel : ViewModel() {
+    private val _appGroups = MutableStateFlow<Map<String, List<AppUpdate>>>(emptyMap())
+    val appGroups: StateFlow<Map<String, List<AppUpdate>>> = _appGroups
 
-        #info-popup.fade-out {
-            opacity: 0;
-            transform: translateX(-50%) translateY(-30px);
-            transition: all 0.5s cubic-bezier(0.4, 0, 1, 1);
-        }
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
 
-        .popup-title {
-            font-family: 'Space Grotesk', sans-serif;
-            color: #00ff88;
-            font-weight: 700;
-            font-size: 1.3rem;
-            letter-spacing: -0.01em;
-            line-height: 1.4;
-        }
+    private val _downloadStatus = MutableStateFlow<DownloadStatus?>(null)
+    val downloadStatus: StateFlow<DownloadStatus?> = _downloadStatus
 
-        /* --- BACKGROUND CONTAINER --- */
-        .bg-container {
-            position: absolute;
-            inset: 0;
-            z-index: 1;
-            overflow: hidden;
-            pointer-events: none;
-        }
+    private val client = OkHttpClient()
+    private val json = Json { ignoreUnknownKeys = true }
 
-        .sq {
-            position: absolute;
-            border-radius: 12px;
-            mix-blend-mode: screen;
-            pointer-events: none;
-            animation: floatAround infinite ease-in-out;
-            transition: filter 0.4s ease-out;
-        }
+    fun clearDownloadStatus() {
+        _downloadStatus.value = null
+    }
 
-        @keyframes floatAround {
-            0%, 100% {
-                transform: translate(var(--ix, 0px), var(--iy, 0px)) rotate(0deg) scale(1);
-                opacity: var(--base-opacity);
-            }
-            50% {
-                transform: translate(calc(var(--drift-x) + var(--ix, 0px)), calc(var(--drift-y) + var(--iy, 0px))) rotate(var(--drift-rot)) scale(1.05);
-                opacity: calc(var(--base-opacity) + 0.15);
-            }
-        }
+    fun downloadAndInstall(context: Context, update: AppUpdate) {
+        val downloadUrl = update.file.download_url ?: return
+        val fileName = update.file.name
 
-        .bg-vignette {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at 30% 40%, rgba(2, 5, 3, 0.1) 0%, rgba(2, 5, 3, 0.85) 80%);
-            z-index: 2;
-            pointer-events: none;
-        }
+        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val request = DownloadManager.Request(Uri.parse(downloadUrl))
+            .setTitle("Downloading $fileName")
+            .setDescription("ACE Updates")
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+            .setAllowedOverMetered(true)
+            .setAllowedOverRoaming(true)
 
-        /* --- HEADER AREA --- */
-        .top-header {
-            position: relative;
-            width: 100%;
-            padding: 30px 10%;
-            display: flex;
-            justify-content: flex-end;
-            z-index: 30;
-        }
-
-        .header-buttons-group {
-            display: flex;
-            gap: 16px;
-        }
-
-        .header-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(4, 14, 9, 0.6);
-            color: #a0f0c8;
-            border: 1px solid rgba(0, 255, 136, 0.25);
-            font-size: 0.95rem;
-            font-weight: 500;
-            padding: 12px 24px;
-            border-radius: 10px;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-
-        .header-btn:hover {
-            background: rgba(0, 255, 136, 0.15);
-            color: #00ff88;
-            border-color: #00ff88;
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
-            transform: translateY(-2px);
-        }
-
-        /* --- MODAL BASE SYSTEM (EXTENSIONS & TOS) --- */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(2, 5, 3, 0.8);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            z-index: 2000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.4s ease;
-        }
-
-        .modal-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-window {
-            background: rgba(4, 18, 11, 0.95);
-            border: 1px solid rgba(0, 255, 136, 0.25);
-            border-radius: 20px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 255, 136, 0.1);
-            transform: translateY(20px) scale(0.95);
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .modal-overlay.show .modal-window {
-            transform: translateY(0) scale(1);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 24px 32px;
-            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
-        }
-
-        .modal-header h2 {
-            font-family: 'Space Grotesk', sans-serif;
-            color: #00ff88;
-            font-size: 1.5rem;
-            letter-spacing: -0.01em;
-        }
-
-        .close-modal-btn {
-            background: none;
-            border: none;
-            color: #ffffff;
-            font-size: 2rem;
-            line-height: 1;
-            cursor: pointer;
-            opacity: 0.6;
-            transition: all 0.2s ease;
-            padding: 0;
-        }
-
-        .close-modal-btn:hover {
-            opacity: 1;
-            color: #00ff88;
-            transform: scale(1.1);
-        }
-
-        .modal-body {
-            padding: 32px;
-            overflow-y: auto;
-        }
-
-        .placeholder-text {
-            text-align: center;
-            color: rgba(160, 240, 200, 0.6);
-            font-size: 1.1rem;
-            padding: 40px 0;
-            font-weight: 300;
-        }
-
-        .extensions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 16px;
-        }
-
-        .extension-card {
-            background: rgba(0, 255, 136, 0.05);
-            border: 1px solid rgba(0, 255, 136, 0.15);
-            border-radius: 14px;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .extension-card:hover {
-            background: rgba(0, 255, 136, 0.1);
-            border-color: #00ff88;
-            transform: translateY(-2px);
-        }
-
-        .ext-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.05));
-            border: 1px solid rgba(0, 255, 136, 0.3);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-shrink: 0;
-        }
-
-        .ext-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .ext-name {
-            font-family: 'Space Grotesk', sans-serif;
-            font-weight: 700;
-            color: #ffffff;
-            font-size: 1rem;
-        }
-
-        .ext-desc {
-            font-size: 0.8rem;
-            color: #628a73;
-        }
-
-        /* --- BACK BUTTON FOR MODAL --- */
-        .back-btn {
-            background: none;
-            border: none;
-            color: #a0f0c8;
-            cursor: pointer;
-            font-size: 0.95rem;
-            margin-bottom: 20px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-            margin-left: -12px;
-        }
-
-        .back-btn:hover {
-            background: rgba(0, 255, 136, 0.1);
-            color: #00ff88;
-        }
-
-        /* --- MAIN CONTENT --- */
-        .main-content {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 0 10%;
-            z-index: 5;
-        }
-
-        .title {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: clamp(3.5rem, 8vw, 8rem);
-            line-height: 0.95;
-            font-weight: 700;
-            letter-spacing: -0.04em;
-            background: linear-gradient(135deg, #ffffff 30%, #a0f0c8 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 24px;
-            text-shadow: 0 10px 30px rgba(0,0,0,0.6);
-        }
-
-        .subtitle {
-            font-size: clamp(1.1rem, 2vw, 1.35rem);
-            font-weight: 300;
-            color: #a0f0c8;
-            max-width: 540px;
-            line-height: 1.6;
-            opacity: 0.9;
-            text-shadow: 0 4px 14px rgba(0,0,0,0.6);
-        }
-
-        /* --- FOOTER AREA --- */
-        .bottom-bar {
-            width: 100%;
-            padding: 40px 10%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 24px;
-            z-index: 10;
-            background: linear-gradient(to top, #020503 70%, transparent 100%);
-        }
-
-        .footer-left {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-        }
-
-        .buttons-group {
-            display: flex;
-            gap: 12px;
-            position: relative;
-        }
-
-        .download-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            background: linear-gradient(135deg, #00ff88 0%, #00e67a 100%);
-            color: #020503;
-            font-size: 1.1rem;
-            font-weight: 600;
-            padding: 16px 36px;
-            border-radius: 14px;
-            text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 8px 30px rgba(0, 255, 136, 0.25);
-        }
-
-        .download-btn:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 15px 40px rgba(0, 255, 136, 0.45);
-        }
-
-        .versions-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(4, 14, 9, 0.6);
-            color: #00ff88;
-            border: 1px solid rgba(0, 255, 136, 0.25);
-            font-size: 1.1rem;
-            font-weight: 600;
-            padding: 16px 24px;
-            border-radius: 14px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-
-        .versions-btn:hover {
-            background: rgba(0, 255, 136, 0.1);
-            border-color: #00ff88;
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.15);
-        }
-
-        .versions-dropdown {
-            position: absolute;
-            bottom: calc(100% + 12px);
-            left: 0;
-            width: 320px;
-            max-height: 320px;
-            background: rgba(4, 14, 9, 0.95);
-            border: 1px solid rgba(0, 255, 136, 0.2);
-            border-radius: 16px;
-            padding: 8px;
-            overflow-y: auto;
-            display: none;
-            flex-direction: column;
-            gap: 4px;
-            z-index: 100;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
-        }
-
-        .versions-dropdown.show {
-            display: flex;
-            animation: fadeInUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .dropdown-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 10px;
-            font-size: 0.95rem;
-            transition: all 0.2s ease;
-        }
-
-        .dropdown-item:hover {
-            background: rgba(0, 255, 136, 0.12);
-            color: #00ff88;
-            padding-left: 20px;
-        }
-
-        .dropdown-item.current-highlight {
-            background: rgba(0, 255, 136, 0.08);
-            border: 1px solid rgba(0, 255, 136, 0.2);
+        val downloadId = try {
+            downloadManager.enqueue(request)
+        } catch (e: Exception) {
+            _downloadStatus.value = DownloadStatus.Error("Download could not be started: ${e.message}")
+            return
         }
         
-        .dropdown-item.current-highlight:hover {
-            background: rgba(0, 255, 136, 0.18);
-        }
+        _downloadStatus.value = DownloadStatus.Downloading(0f, fileName)
 
-        .dropdown-section-title {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #628a73;
-            padding: 10px 16px 4px 16px;
-            font-weight: 600;
-            border-top: 1px solid rgba(0, 255, 136, 0.1);
-            margin-top: 4px;
-        }
-
-        .latest-badge {
-            font-size: 0.75rem;
-            background: rgba(0, 255, 136, 0.15);
-            color: #00ff88;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-weight: 600;
-            border: 1px solid rgba(0, 255, 136, 0.3);
-        }
-
-        .apk-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .apk-name {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.15rem;
-            color: #ffffff;
-            font-weight: 700;
-            letter-spacing: 0.01em;
-        }
-
-        .apk-meta {
-            font-size: 0.9rem;
-            color: #628a73;
-        }
-
-        /* --- RESPONSIVE OPTIMIZATION --- */
-        @media (max-width: 900px) {
-            .top-header { 
-                padding: 20px 6%; 
-            }
-            
-            .header-btn {
-                padding: 10px 18px;
-                font-size: 0.9rem;
-            }
-
-            .main-content {
-                padding: 40px 6% 20px 6%;
-                justify-content: center;
-            }
-            
-            .bottom-bar { 
-                flex-direction: column-reverse; 
-                align-items: center; 
-                padding: 20px 6% 30px 6%; 
-                gap: 24px; 
-            }
-            
-            .footer-left { 
-                flex-direction: column; 
-                align-items: center; 
-                width: 100%; 
-                gap: 16px; 
-            }
-            
-            .buttons-group { 
-                width: 100%; 
-                flex-direction: column; 
-            }
-            
-            .download-btn, .versions-btn { 
-                width: 100%; 
-                justify-content: center; 
-            }
-            
-            .versions-dropdown { 
-                width: 100%; 
-            }
-            
-            .apk-info {
-                text-align: center;
-            }
-            
-            .branding { 
-                text-align: center; 
-                width: 100%; 
-                border-bottom: 1px solid rgba(0, 255, 136, 0.1); 
-                padding-bottom: 16px; 
-                margin-bottom: 4px;
-                font-size: 0.9rem;
-            }
-        }
-        
-        /* --- TOS DOC STYLING --- */
-        .tos-document h3 { color: #00ff88; font-family: 'Space Grotesk', sans-serif; margin-top: 24px; margin-bottom: 8px; font-size: 1.1rem; }
-        .tos-document h4 { color: #a0f0c8; margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem; }
-        .tos-document p { margin-bottom: 12px; }
-        .tos-document ul { margin-bottom: 12px; padding-left: 20px; }
-        .tos-document li { margin-bottom: 6px; }
-    </style>
-</head>
-<body>
-
-    <div id="loader">
-        <div class="loader-text">ACE NEX</div>
-    </div>
-
-    <div id="info-popup">
-        <div class="popup-title" id="popup-text-content">Searching latest version...</div>
-    </div>
-
-    <div id="tos-modal" class="modal-overlay">
-        <div class="modal-window" style="max-width: 750px;">
-            <div class="modal-header">
-                <h2>Terms of Service & Privacy</h2>
-                <button class="close-modal-btn" id="close-tos-btn" style="display: none;">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p style="margin-bottom: 16px; line-height: 1.5; color: #a0f0c8; font-size: 0.95rem;">
-                    To download and use ACE Launcher and its extensions, you must review and accept our Terms of Use and Privacy Policy.
-                </p>
-                
-                <div class="tos-document" style="max-height: 40vh; overflow-y: auto; background: rgba(2, 5, 3, 0.6); padding: 20px; border-radius: 10px; border: 1px solid rgba(0, 255, 136, 0.15); font-size: 0.85rem; color: rgba(255,255,255,0.85); margin-bottom: 20px; line-height: 1.6;">
+        viewModelScope.launch {
+            var downloading = true
+            while (downloading) {
+                val query = DownloadManager.Query().setFilterById(downloadId)
+                val cursor = downloadManager.query(query)
+                if (cursor != null && cursor.moveToFirst()) {
+                    val statusColumn = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                    val status = if (statusColumn != -1) cursor.getInt(statusColumn) else -1
                     
-                    <h3 style="margin-top: 0; font-size: 1.3rem;">Terms of Use ACE Launcher</h3>
-                    <p style="opacity: 0.6; font-size: 0.8rem;">Last Updated: July 1, 2026</p>
-                    <p>Welcome to ACE Launcher. Please read these Terms of Use ("Terms") carefully before using the ACE Launcher application and its associated extensions, plug-ins, or add-ons (collectively, the "Services"). By downloading, installing, or using the Services, you agree to be bound by these Terms. If you do not agree to these Terms, you may not use the Services.</p>
-
-                    <h3>1. License Grant</h3>
-                    <p>We grant you a limited, non-exclusive, non-transferable, and revocable license to use ACE Launcher and its extensions for personal, non-commercial purposes on your Android devices. You are expressly prohibited from:</p>
-                    <ul>
-                        <li>Decompiling, disassembling, or reverse engineering the app or any part thereof, unless explicitly permitted by applicable law.</li>
-                        <li>Using the Services for any illegal, fraudulent, or unauthorized purposes.</li>
-                        <li>Distributing modified versions of the app or copying the app's intellectual property without prior consent.</li>
-                    </ul>
-
-                    <h3>2. Features and Extensions</h3>
-                    <p>ACE Launcher and its extensions are provided free of charge with their current feature set. We reserve the right to modify, update, adapt, or temporarily or permanently discontinue features or extensions at any time.</p>
-
-                    <h3>3. Privacy</h3>
-                    <p>Your privacy is important to us. The collection and processing of personal data are conducted exclusively within the framework of applicable data protection laws. Detailed information can be found in our Privacy Policy below.</p>
-
-                    <h3>4. Disclaimer of Warranties</h3>
-                    <p>The Services are provided "as is" and "as available." We do not guarantee that ACE Launcher will be error-free, uninterrupted, or fully functional on all Android devices. We are not liable for any damages (e.g., data loss, system errors, or impairments to other apps) arising from the installation or use of the app or its extensions on your device, unless caused by our gross negligence or intentional misconduct.</p>
-
-                    <h3>5. Intellectual Property</h3>
-                    <p>All rights, titles, and interests in and to ACE Launcher, including its design, logos, source code, graphical user interface, and extensions, belong exclusively to us (the developers). "ACE Launcher" is a protected designation.</p>
-
-                    <h3>6. Changes to the Terms</h3>
-                    <p>We reserve the right to modify these Terms of Use at any time. If we make changes, we will inform you via an update within the app or through the platform where the app is provided. Continued use of the Services after a modification constitutes acceptance of the new Terms.</p>
-
-                    <h3>7. Governing Law and Contact</h3>
-                    <p>These Terms are governed by the laws of Germany. If you have any questions or feedback regarding ACE Launcher, you can contact us at support.einfynn@gmail.com.</p>
-
-                    <hr style="border-color: rgba(0,255,136,0.1); margin: 30px 0;">
-
-                    <h3 style="font-size: 1.3rem;">Privacy Policy</h3>
-                    <p style="opacity: 0.6; font-size: 0.8rem;">Last Updated: July 1, 2026</p>
-                    <p>The protection of your personal data is a major concern for us. Below, we inform you about how we handle your data when you use ACE Launcher and its extensions (collectively, the "App").</p>
-
-                    <h3>1. Types of Processed Data and Purpose</h3>
-                    <h4>a) Device Permissions and Local Processing</h4>
-                    <p>As a core application for managing your Android user interface, ACE Launcher requires access to certain functions of your device to enable display and organization:</p>
-                    <ul>
-                        <li><strong>Installed Apps:</strong> Required to display and organize your apps on the home screen and in the app drawer.</li>
-                        <li><strong>Notifications (optional):</strong> If enabled, required to display notification badges on app icons.</li>
-                        <li><strong>Storage Access / Wallpapers (optional):</strong> Required to set custom wallpapers or back up your configurations.</li>
-                    </ul>
-
-                    <h4>b) Automatically Collected and Online Processed Data (Usage Data & Analytics)</h4>
-                    <p>The app does not operate entirely locally. To provide certain online functionalities of the extensions, improve stability, and troubleshoot errors, data is transmitted to servers. This includes pseudonymized technical data (e.g., via analytics services like Google Firebase Crashlytics):</p>
-                    <ul>
-                        <li>Device model, operating system version, and technical specifications.</li>
-                        <li>Log data in the event of an app crash (Crash Reports) to locate the error.</li>
-                        <li>Usage statistics regarding the features of the app and its extensions to continuously improve the user experience.</li>
-                    </ul>
-                    <p>The legal basis for this processing is our legitimate interest in ensuring app stability, security, and continuous optimization in accordance with Art. 6 Abs. 1 lit. f GDPR.</p>
-
-                    <h3>2. Sharing Data with Third Parties</h3>
-                    <p>Since no in-app purchases are integrated into the app, no transaction data is shared. Technical data is transferred exclusively to service providers for app analysis and stability monitoring (e.g., Google LLC), if integrated. No personal data is shared with third parties or ad networks for advertising purposes.</p>
-
-                    <h3>3. Your Rights</h3>
-                    <p>Regarding the processed data, you have the following rights under the GDPR:</p>
-                    <ul>
-                        <li>Right of access (Art. 15 GDPR)</li>
-                        <li>Right to rectification or erasure (Art. 16 & 17 GDPR)</li>
-                        <li>Right to restriction of processing (Art. 18 GDPR)</li>
-                        <li>Right to data portability (Art. 20 GDPR)</li>
-                        <li>Right to object to processing (Art. 21 GDPR)</li>
-                    </ul>
-                    <p>However, since we generally do not store directly identifiable personal data (such as names or email addresses) on servers, we are typically unable to assign pseudonymous data to a specific user.</p>
-
-                    <h3>4. Changes to this Privacy Policy</h3>
-                    <p>We reserve the right to adapt this Privacy Policy so that it always complies with current legal requirements or to implement changes to our features. The new Privacy Policy will then apply to your next visit.</p>
-
-                </div>
-                
-                <label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; color: #ffffff; font-size: 0.9rem; margin-bottom: 24px; user-select: none;">
-                    <input type="checkbox" id="tos-checkbox" style="margin-top: 3px; width: 16px; height: 16px; accent-color: #00ff88; cursor: pointer;">
-                    <span>I have read and agree to the Terms of Use and Privacy Policy.</span>
-                </label>
-                <button id="tos-accept-btn" class="download-btn" style="width: 100%; justify-content: center; opacity: 0.5; pointer-events: none; padding: 14px 24px; font-size: 1rem; border: none; cursor: not-allowed;">
-                    Accept & Continue
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="extensions-modal" class="modal-overlay">
-        <div class="modal-window">
-            <div class="modal-header">
-                <h2>Extensions</h2>
-                <button class="close-modal-btn" id="close-extensions-btn">&times;</button>
-            </div>
-            <div class="modal-body" id="extensions-list">
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-container" id="squares-container"></div>
-    <div class="bg-vignette"></div>
-
-    <header class="top-header">
-        <div class="header-buttons-group">
-            <button class="header-btn" id="open-tos-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
-                ToS & Privacy
-            </button>
-            <a href="mailto:support.einfynn@gmail.com" class="header-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                    <polyline points="22,6 12,13 2,6"></polyline>
-                </svg>
-                Support
-            </a>
-        </div>
-    </header>
-
-    <main class="main-content">
-        <h1 class="title">ACE<br>Launcher</h1>
-         <p class="subtitle">The intelligent dashboard experience for your Android smartphone. Featuring a minimalist design, it is entirely free from ads and microtransactions. The sole focus is on your personal customization.<br><br>This Launcher and extensions are for → <strong>ANDROID 8.0 ↑</strong></p>
-    </main>
-
-    <footer class="bottom-bar">
-        <div class="footer-left">
-            <div class="buttons-group">
-                <a href="#" id="main-download-btn" class="download-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    Start Download
-                </a>
-                
-                <button class="versions-btn" id="versions-toggle-btn">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="4" y1="6" x2="20" y2="6"></line>
-                        <line x1="4" y1="12" x2="20" y2="12"></line>
-                        <line x1="4" y1="18" x2="20" y2="18"></line>
-                    </svg>
-                    Builds
-                </button>
-
-                <button id="extensions-toggle-btn" class="versions-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="7" height="7"></rect>
-                        <rect x="14" y="3" width="7" height="7"></rect>
-                        <rect x="14" y="14" width="7" height="7"></rect>
-                        <rect x="3" y="14" width="7" height="7"></rect>
-                    </svg>
-                    Extensions
-                </button>
-
-                <div class="versions-dropdown" id="versions-menu"></div>
-            </div>
-            
-            <div class="apk-info" id="main-apk-info">
-                <span class="apk-name" id="main-apk-title">Analyzing archive...</span>
-                <span class="apk-meta" id="main-apk-details">Searching for available builds...</span>
-            </div>
-        </div>
-
-        <div class="branding">
-            Security Notice:<br>Download ACE Launcher <span>exclusively through this website</span>.
-        </div>
-    </footer>
-
-    <script>
-        /* ==========================================
-           0. NOTIFICATION SYSTEM
-           ========================================== */
-        function notifyApp(fileName) {
-            fetch('https://ntfy.sh/einfynn_ace_nex_downloads', {
-                method: 'POST',
-                body: 'Download: ' + fileName,
-                headers: { 'Title': 'ACE.NEX Download' }
-            }).catch(e => console.log("Notify error"));
-        }
-
-        /* ==========================================
-           1. AUTOMATIC APK MANAGEMENT & SORTING
-           ========================================== */
-        
-        const apkFiles = [
-             "ACE Launcher 1.0.2.3.apk",
-             "ACE Launcher 1.0.2.2.apk",
-             "ACE Launcher 1.0.2.1.apk",
-             "ACE Launcher 1.0.2.0.apk",
-             "ACE Launcher 1.0.1.3.apk",
-             "ACE Launcher 1.0.1.2.apk",
-             "ACE Launcher 1.0.1.1.apk",
-             "ACE Launcher 1.0.1.0.apk",
-             "ACE Launcher 1.0.0.38.apk",
-             "ACE Launcher 1.0.0.37.apk",
-             "ACE Launcher 1.0.0.36.apk",
-             "ACE Launcher 1.0.0.35.apk",
-             "ACE Launcher 1.0.0.34.apk",
-             "ACE Launcher 1.0.0.33.apk",
-             "ACE Launcher 1.0.0.30.apk",
-             "ACE Launcher 1.0.0.29.apk",
-             "ACE Launcher 1.0.0.28.apk",
-             "ACE Launcher 1.0.0.27.apk",
-             "ACE Launcher 1.0.0.26.apk",
-             "ACE Launcher 1.0.0.25.apk",
-             "ACE Launcher 1.0.0.24.apk",
-             "ACE Launcher 1.0.0.23.apk",
-             "ACE Launcher 1.0.0.22.apk",
-             "ACE Launcher 1.0.0.21.apk",
-             "ACE Launcher 1.0.0.20.apk",
-             "ACE Launcher 1.0.0.19.apk",
-             "ACE Launcher 1.0.0.18.apk",
-             "ACE Launcher 1.0.0.17.apk",
-             "ACE Launcher 1.0.0.16.apk",
-             "ACE Launcher 1.0.0.15.apk",
-             "ACE Launcher 1.0.0.14.apk",
-        ];
-
-        const extensionFiles = [
-             "Deploy NEWS 1.0.1.0.apk",
-             "ACE Weather 1.0.1.0.apk",
-             "ACE Weather 1.0.1.1.apk",
-             "ACE Weather 1.0.1.2.apk",
-             "ACE Weather 1.0.1.3.apk",
-             "ACE Weather 1.0.1.4.apk",
-             "ACE Updates 1.0.0.1.apk",
-             "ACE Updates 1.0.0.2.apk",
-             "ACE Updates 1.0.1.0.apk",
-             "ACE Updates 1.0.1.1.apk",
-             "ACE Updates 1.0.1.3.apk",
-             "ACE Updates 1.0.1.4.apk",
-             "The Folder 1.0.1.0.apk",
-        ];
-
-        function extractVersion(filename) {
-            const match = filename.match(/(\d+\.\d+\.\d+\.\d+|\d+\.\d+\.\d+)/);
-            return match ? match[0] : "0.0.0";
-        }
-
-        function formatCleanName(filename) {
-            return filename
-                .replace(/\.apk$/i, '')
-                .replace('Launcehr', 'Launcher');
-        }
-
-        function getBaseName(filename) {
-            return filename.replace(/\s*\d+\.\d+\.\d+(\.\d+)?\.apk$/i, '').trim();
-        }
-
-        function sortApks(a, b) {
-            const vA = extractVersion(a).split('.').map(Number);
-            const vB = extractVersion(b).split('.').map(Number);
-            for (let i = 0; i < Math.max(vA.length, vB.length); i++) {
-                const numA = vA[i] || 0;
-                const numB = vB[i] || 0;
-                if (numA !== numB) return numB - numA; 
-            }
-            return 0;
-        }
-
-        apkFiles.sort(sortApks);
-        extensionFiles.sort(sortApks);
-
-        const mainDownloadBtn = document.getElementById('main-download-btn');
-        const mainApkTitle = document.getElementById('main-apk-title');
-        const mainApkDetails = document.getElementById('main-apk-details');
-        const versionsMenu = document.getElementById('versions-menu');
-        const versionsToggleBtn = document.getElementById('versions-toggle-btn');
-        const popupTextContent = document.getElementById('popup-text-content');
-
-        if (apkFiles.length > 0) {
-            const latestApk = apkFiles[0];
-            const latestVersion = extractVersion(latestApk);
-
-            mainDownloadBtn.href = latestApk;
-            mainDownloadBtn.setAttribute('download', latestApk);
-            mainDownloadBtn.addEventListener('click', () => notifyApp(latestApk));
-            
-            mainApkTitle.textContent = formatCleanName(latestApk);
-            mainApkDetails.textContent = `Latest Version v${latestVersion} • Stable`;
-            
-            popupTextContent.innerHTML = `Newest Release <span style="color:#ffffff;">${latestApk}</span>`;
-
-            const currentItem = document.createElement('a');
-            currentItem.href = latestApk;
-            currentItem.setAttribute('download', latestApk);
-            currentItem.classList.add('dropdown-item', 'current-highlight');
-            currentItem.innerHTML = `
-                <span style="font-weight: 600; color: #00ff88;">Recommended (v${latestVersion})</span>
-                <span class="latest-badge">Active</span>
-            `;
-            currentItem.addEventListener('click', () => notifyApp(latestApk));
-            versionsMenu.appendChild(currentItem);
-
-            const sectionTitle = document.createElement('div');
-            sectionTitle.classList.add('dropdown-section-title');
-            sectionTitle.textContent = "Version History";
-            versionsMenu.appendChild(sectionTitle);
-
-            apkFiles.forEach((apk, index) => {
-                const versionNum = extractVersion(apk);
-                const item = document.createElement('a');
-                item.href = apk;
-                item.setAttribute('download', apk);
-                item.classList.add('dropdown-item');
-                
-                item.innerHTML = `
-                    <span>Version ${versionNum}</span>
-                    ${index === 0 ? '<span style="color: #00ff88; font-size:0.85rem; font-weight:600;">New</span>' : '<span style="opacity:0.4; font-size:0.85rem;">APK</span>'}
-                `;
-                item.addEventListener('click', () => notifyApp(apk));
-                versionsMenu.appendChild(item);
-            });
-        }
-
-        versionsToggleBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            versionsMenu.classList.toggle('show');
-        });
-
-        document.addEventListener('click', () => {
-            versionsMenu.classList.remove('show');
-        });
-
-        /* ==========================================
-           2. EXTENSIONS MODAL MENU (GROUPS & VERSIONS)
-           ========================================== */
-           
-        const extensionsModal = document.getElementById('extensions-modal');
-        const extensionsToggleBtn = document.getElementById('extensions-toggle-btn');
-        const closeExtensionsBtn = document.getElementById('close-extensions-btn');
-        const extensionsList = document.getElementById('extensions-list');
-        
-        function renderExtensions(selectedGroup = null) {
-            if (extensionFiles.length === 0) {
-                extensionsList.innerHTML = `<div class="placeholder-text">Coming soon... No extensions available yet.</div>`;
-                return;
-            }
-
-            const groupedExtensions = {};
-            extensionFiles.forEach(file => {
-                const baseName = getBaseName(file);
-                if (!groupedExtensions[baseName]) {
-                    groupedExtensions[baseName] = [];
+                    when (status) {
+                        DownloadManager.STATUS_SUCCESSFUL -> {
+                            downloading = false
+                            val uri = downloadManager.getUriForDownloadedFile(downloadId)
+                            if (uri != null) {
+                                _downloadStatus.value = DownloadStatus.Completed(uri)
+                                installApkFromUri(context, uri)
+                            } else {
+                                _downloadStatus.value = DownloadStatus.Error("File URI could not be retrieved")
+                            }
+                        }
+                        DownloadManager.STATUS_FAILED -> {
+                            downloading = false
+                            _downloadStatus.value = DownloadStatus.Error("Download failed")
+                        }
+                        DownloadManager.STATUS_RUNNING, DownloadManager.STATUS_PENDING -> {
+                            val totalColumn = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
+                            val downloadedColumn = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
+                            
+                            val totalSize = if (totalColumn != -1) cursor.getLong(totalColumn) else 0L
+                            val downloadedSize = if (downloadedColumn != -1) cursor.getLong(downloadedColumn) else 0L
+                            
+                            if (totalSize > 0) {
+                                val progress = downloadedSize.toFloat() / totalSize
+                                _downloadStatus.value = DownloadStatus.Downloading(progress, fileName)
+                            }
+                        }
+                    }
+                } else {
+                    downloading = false
                 }
-                groupedExtensions[baseName].push(file);
-            });
+                cursor?.close()
+                if (downloading) delay(500)
+            }
+        }
+    }
 
-            if (!selectedGroup) {
-                let html = '<div class="extensions-grid" style="grid-template-columns: 1fr; gap: 12px;">';
-                
-                Object.keys(groupedExtensions).forEach(groupName => {
-                    const files = groupedExtensions[groupName];
-                    const count = files.length;
-                    
-                    html += `
-                        <div class="extension-card group-card" data-group="${groupName}" style="border-color: #00ff88; background: rgba(0, 255, 136, 0.05);">
-                            <div class="ext-icon" style="background: rgba(0, 255, 136, 0.1);">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="3" width="7" height="7"></rect>
-                                    <rect x="14" y="3" width="7" height="7"></rect>
-                                    <rect x="14" y="14" width="7" height="7"></rect>
-                                    <rect x="3" y="14" width="7" height="7"></rect>
-                                </svg>
-                            </div>
-                            <div class="ext-info" style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
-                                <div>
-                                    <span class="ext-name" style="color: #00ff88; font-weight: 700;">${groupName}</span>
-                                    <span class="ext-desc" style="color: rgba(255,255,255,0.6);">${count} Versions available</span>
-                                </div>
-                                <span style="font-size: 0.85rem; color: #00ff88; font-weight: 600;">Open</span>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                html += '</div>';
-                extensionsList.innerHTML = html;
+    fun fetchApks() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val websiteRequest = Request.Builder()
+                    .url("https://einfynn-html.github.io/ACE.NEX/")
+                    .build()
+                val websiteHtml = withContext(Dispatchers.IO) {
+                    client.newCall(websiteRequest).execute().body?.string()
+                } ?: ""
 
-                document.querySelectorAll('.group-card').forEach(card => {
-                    card.addEventListener('click', () => {
-                        const group = card.getAttribute('data-group');
-                        renderExtensions(group);
-                    });
-                });
+                val websiteApkNames = Regex("""[\w.-]+\.apk""", RegexOption.IGNORE_CASE)
+                    .findAll(websiteHtml)
+                    .map { it.value }
+                    .toList()
 
-            } else {
-                const files = groupedExtensions[selectedGroup];
-                
-                let html = `
-                    <button class="back-btn" id="back-to-groups-btn">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="19" y1="12" x2="5" y2="12"></line>
-                            <polyline points="12 19 5 12 12 5"></polyline>
-                        </svg>
-                         Back
-                    </button>
-                    <div class="extensions-grid" style="grid-template-columns: 1fr; gap: 12px;">
-                `;
+                val request = Request.Builder()
+                    .url("https://api.github.com/repos/einfynn-html/ACE.NEX/contents/")
+                    .header("User-Agent", "ACE-Updates-App")
+                    .build()
 
-                files.forEach((ext, index) => {
-                    const versionNum = extractVersion(ext);
-                    const cleanName = formatCleanName(ext);
-                    
-                    if (index === 0) {
-                        html += `
-                            <a href="${ext}" download="${ext}" class="extension-card" onclick="notifyApp('${ext}')" style="border-color: #00ff88; background: rgba(0, 255, 136, 0.1);">
-                                <div class="ext-icon" style="background: rgba(0, 255, 136, 0.2);">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="7 10 12 15 17 10"></polyline>
-                                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                                    </svg>
-                                </div>
-                                <div class="ext-info" style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
-                                    <div>
-                                        <span class="ext-name" style="color: #ffffff; font-weight: 700;">${cleanName}</span>
-                                        <span class="ext-desc" style="color: #00ff88;">Version ${versionNum} (Featured)</span>
-                                    </div>
-                                    <span class="latest-badge">Neu</span>
-                                </div>
-                            </a>
-                        `;
-                    } else {
-                        html += `
-                            <a href="${ext}" download="${ext}" onclick="notifyApp('${ext}')" class="extension-card">
-                                <div class="ext-icon">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#628a73" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="7 10 12 15 17 10"></polyline>
-                                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                                    </svg>
-                                </div>
-                                <div class="ext-info" style="flex-grow: 1; display: flex; justify-content: space-between; align-items: center; flex-direction: row;">
-                                    <div>
-                                        <span class="ext-name">${cleanName}</span>
-                                        <span class="ext-desc">Version ${versionNum}</span>
-                                    </div>
-                                    <span style="opacity: 0.5; font-size: 0.85rem;">APK</span>
-                                </div>
-                            </a>
-                        `;
+                val response = withContext(Dispatchers.IO) {
+                    client.newCall(request).execute()
+                }
+
+                if (response.isSuccessful) {
+                    val body = response.body?.string()
+                    if (body != null) {
+                        val allFiles = json.decodeFromString<List<GithubFile>>(body)
+                        val apkFiles = allFiles.filter { it.type == "file" && it.name.endsWith(".apk", ignoreCase = true) }
+                        
+                        val updates = apkFiles.map { file -> parseApkName(file) }
+
+                        val grouped = updates.groupBy { it.appName }.toSortedMap().mapValues { entry ->
+                            val appUpdates = entry.value
+                            appUpdates.sortedWith { a, b ->
+                                val vComp = compareVersions(b.version, a.version)
+                                if (vComp != 0) return@sortedWith vComp
+                                
+                                val indexA = websiteApkNames.indexOf(a.file.name)
+                                val indexB = websiteApkNames.indexOf(b.file.name)
+                                
+                                when {
+                                    indexA != -1 && indexB != -1 -> indexA.compareTo(indexB)
+                                    indexA != -1 -> -1
+                                    indexB != -1 -> 1
+                                    else -> 0
+                                }
+                            }
+                        }
+                        
+                        _appGroups.value = grouped
+                        
+                        val latestPerApp = grouped.mapValues { it.value.first() }
+                        saveLastVersions(latestPerApp)
                     }
-                });
-
-                html += '</div>';
-                extensionsList.innerHTML = html;
-
-                document.getElementById('back-to-groups-btn').addEventListener('click', () => {
-                    renderExtensions(null);
-                });
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                _isLoading.value = false
             }
         }
+    }
 
-        extensionsToggleBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            renderExtensions(null);
-            extensionsModal.classList.add('show');
-        });
+    private fun saveLastVersions(latestUpdates: Map<String, AppUpdate>) {
+        val context = AppGlobals.getContext() ?: return
+        val prefs = context.getSharedPreferences("ace_updates", Context.MODE_PRIVATE)
+        val editor = prefs.edit()
+        latestUpdates.forEach { (appName, update) ->
+            editor.putString("last_version_$appName", update.version)
+        }
+        editor.apply()
+    }
+}
 
-        closeExtensionsBtn.addEventListener('click', () => {
-            extensionsModal.classList.remove('show');
-        });
-
-        extensionsModal.addEventListener('click', (e) => {
-            if (e.target === extensionsModal) {
-                extensionsModal.classList.remove('show');
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        AppGlobals.appContext = applicationContext
+        scheduleUpdateChecks(this)
+        
+        setContent {
+            ACEUpdatesTheme {
+                ACEUpdatesApp()
             }
-        });
+        }
+    }
+}
 
+object AppGlobals {
+    var appContext: Context? = null
+    fun getContext(): Context? = appContext
+}
 
-        /* ==========================================
-           3. TIMER MANAGEMENT & TOS FLOW
-           ========================================== */
-        const tosModal = document.getElementById('tos-modal');
-        const tosCheckbox = document.getElementById('tos-checkbox');
-        const tosAcceptBtn = document.getElementById('tos-accept-btn');
-        const openTosBtn = document.getElementById('open-tos-btn');
-        const closeTosBtn = document.getElementById('close-tos-btn');
+fun scheduleUpdateChecks(context: Context) {
+    // Poll GitHub for updates
+    val workRequest = OneTimeWorkRequestBuilder<UpdateCheckWorker>()
+        .setInitialDelay(1, TimeUnit.MINUTES)
+        .build()
 
-        window.addEventListener('load', () => {
-            const loader = document.getElementById('loader');
+    WorkManager.getInstance(context).enqueueUniqueWork(
+        "ACE_Update_Check",
+        ExistingWorkPolicy.KEEP,
+        workRequest
+    )
 
-            setTimeout(() => {
-                loader.style.opacity = '0';
-                loader.style.visibility = 'hidden';
+    // Poll ntfy.sh for instant update signals
+    val ntfyRequest = PeriodicWorkRequestBuilder<NtfyCheckWorker>(15, TimeUnit.MINUTES)
+        .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+        .build()
 
-                setTimeout(() => {
-                    if (!localStorage.getItem('tosAccepted')) {
-                        openTos();
-                    } else {
-                        triggerInfoPopup();
+    WorkManager.getInstance(context).enqueueUniqueWork(
+        "ACE_Ntfy_Check",
+        ExistingWorkPolicy.KEEP,
+        ntfyRequest
+    )
+}
+
+class NtfyCheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        val client = OkHttpClient()
+        val topic = "einfynn_ace_updates"
+        val prefs = applicationContext.getSharedPreferences("ace_updates", Context.MODE_PRIVATE)
+        val lastTime = prefs.getLong("ntfy_last_time", 0L)
+
+        try {
+            val url = "https://ntfy.sh/$topic/json?poll=1&since=${if (lastTime == 0L) "all" else lastTime.toString()}"
+            val request = Request.Builder().url(url).build()
+            val response = withContext(Dispatchers.IO) { client.newCall(request).execute() }
+
+            if (response.isSuccessful) {
+                val body = response.body?.string() ?: ""
+                val lines = body.split("\n")
+                var newestTime = lastTime
+
+                for (line in lines) {
+                    if (line.isBlank()) continue
+                    if (line.contains("\"event\":\"message\"")) {
+                        val messageMatch = Regex("\"message\":\"(.+?)\"").find(line)
+                        val titleMatch = Regex("\"title\":\"(.+?)\"").find(line)
+                        val timeMatch = Regex("\"time\":(\\d+)").find(line)
+
+                        val message = messageMatch?.groupValues?.get(1) ?: ""
+                        val title = titleMatch?.groupValues?.get(1) ?: "New Update"
+                        val time = timeMatch?.groupValues?.get(1)?.toLong() ?: 0L
+
+                        if (time > lastTime) {
+                            sendNotification(applicationContext, title, message)
+                            if (time > newestTime) newestTime = time
+
+                            // Trigger immediate GitHub check
+                            val checkRequest = OneTimeWorkRequestBuilder<UpdateCheckWorker>().build()
+                            WorkManager.getInstance(applicationContext).enqueueUniqueWork(
+                                "ACE_Update_Check",
+                                ExistingWorkPolicy.REPLACE,
+                                checkRequest
+                            )
+                        }
                     }
-                }, 400); 
-
-            }, 3000); 
-        });
-
-        function triggerInfoPopup() {
-            const popup = document.getElementById('info-popup');
-            if (popup) {
-                popup.classList.add('show');
-                setTimeout(() => {
-                    popup.classList.add('fade-out');
-                    setTimeout(() => {
-                        popup.classList.remove('show', 'fade-out');
-                    }, 500); 
-                }, 5000);
+                }
+                prefs.edit().putLong("ntfy_last_time", newestTime).apply()
             }
-        }
+        } catch (e: Exception) {}
 
-        /* ==========================================
-           4. TERMS OF SERVICE INTERACTION LOGIC
-           ========================================== */
-        function openTos() {
-            tosModal.classList.add('show');
-            if (localStorage.getItem('tosAccepted')) {
-                // Falls bereits akzeptiert, kann das Modal einfach wieder geschlossen werden
-                closeTosBtn.style.display = 'block';
-                tosCheckbox.checked = true;
-                tosAcceptBtn.style.opacity = '1';
-                tosAcceptBtn.style.pointerEvents = 'auto';
-                tosAcceptBtn.style.cursor = 'pointer';
-                tosAcceptBtn.textContent = 'Close';
+        return Result.success()
+    }
+}
+
+class UpdateCheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
+    override suspend fun doWork(): Result {
+        val client = OkHttpClient()
+        val json = Json { ignoreUnknownKeys = true }
+        
+        // Ensure channel exists
+        val notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel("updates_channel", "App Updates", NotificationManager.IMPORTANCE_DEFAULT)
+            notificationManager.createNotificationChannel(channel)
+        }
+        
+        try {
+            val request = Request.Builder()
+                .url("https://api.github.com/repos/einfynn-html/ACE.NEX/contents/")
+                .header("User-Agent", "ACE-Updates-App")
+                .build()
+
+            val response = withContext(Dispatchers.IO) {
+                client.newCall(request).execute()
+            }
+
+            if (response.isSuccessful) {
+                val body = response.body?.string()
+                if (body != null) {
+                    val allFiles = json.decodeFromString<List<GithubFile>>(body)
+                    val apkFiles = allFiles.filter { it.type == "file" && it.name.endsWith(".apk", ignoreCase = true) }
+                    val updates = apkFiles.map { parseApkName(it) }
+                    val latestUpdates = updates.groupBy { it.appName }.mapValues { it.value.maxBy { u -> u.version } }
+
+                    val prefs = applicationContext.getSharedPreferences("ace_updates", Context.MODE_PRIVATE)
+                    
+                    val updatedApps = mutableListOf<String>()
+                    latestUpdates.forEach { (appName, update) ->
+                        val lastVersion = prefs.getString("last_version_$appName", null)
+                        if (lastVersion != null && compareVersions(update.version, lastVersion) > 0) {
+                            updatedApps.add(appName)
+                        }
+                        prefs.edit().putString("last_version_$appName", update.version).apply()
+                    }
+
+                    if (updatedApps.isNotEmpty()) {
+                        sendNotification(applicationContext, "New updates available", "Updates for: ${updatedApps.joinToString(", ")}")
+                    }
+                }
             } else {
-                // Falls noch nicht akzeptiert, zwinge den Nutzer dazu
-                closeTosBtn.style.display = 'none';
-                tosAcceptBtn.textContent = 'Accept & Continue';
+                sendNotification(applicationContext, "GitHub unreachable", "The update page could not be loaded (Code: ${response.code}).")
+            }
+        } catch (e: Exception) {
+            sendNotification(applicationContext, "GitHub unreachable", "Error checking for updates: ${e.message}")
+        } finally {
+            // Schedule next check in 1 hour
+            val nextWork = OneTimeWorkRequestBuilder<UpdateCheckWorker>()
+                .setInitialDelay(1, TimeUnit.HOURS)
+                .build()
+            WorkManager.getInstance(applicationContext).enqueueUniqueWork(
+                "ACE_Update_Check",
+                ExistingWorkPolicy.REPLACE,
+                nextWork
+            )
+        }
+        return Result.success()
+    }
+}
+
+fun sendNotification(context: Context, title: String, message: String) {
+    val channelId = "updates_channel"
+    val intent = Intent(context, MainActivity::class.java).apply {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+    }
+    val pendingIntent = PendingIntent.getActivity(
+        context, 0, intent, 
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    val builder = NotificationCompat.Builder(context, channelId)
+        .setSmallIcon(android.R.drawable.stat_sys_download_done)
+        .setContentTitle(title)
+        .setContentText(message)
+        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .setContentIntent(pendingIntent)
+        .setAutoCancel(true)
+
+    val notificationManager = NotificationManagerCompat.from(context)
+    try {
+        notificationManager.notify(title.hashCode(), builder.build())
+    } catch (e: SecurityException) {
+        // No permission
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ACEUpdatesApp(viewModel: MainViewModel = viewModel()) {
+    val appGroups by viewModel.appGroups.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val context = LocalContext.current
+    var selectedApp by remember { mutableStateOf<String?>(null) }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val permissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission()
+        ) { _ -> }
+        
+        LaunchedEffect(Unit) {
+            permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchApks()
+    }
+
+    if (selectedApp != null) {
+        BackHandler {
+            selectedApp = null
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        InteractiveBackground()
+        
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopAppBar(
+                    title = { 
+                        AnimatedContent(
+                            targetState = selectedApp ?: "ACE Updates",
+                            transitionSpec = {
+                                (fadeIn(animationSpec = tween(300)) + slideInHorizontally { it / 2 })
+                                    .togetherWith(fadeOut(animationSpec = tween(300)) + slideOutHorizontally { -it / 2 })
+                            },
+                            label = "TitleAnimation"
+                        ) { targetTitle ->
+                            Text(
+                                targetTitle, 
+                                style = MaterialTheme.typography.headlineSmall, 
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        AnimatedVisibility(
+                            visible = selectedApp != null,
+                            enter = fadeIn() + expandHorizontally(),
+                            exit = fadeOut() + shrinkHorizontally()
+                        ) {
+                            IconButton(onClick = { selectedApp = null }) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Black.copy(alpha = 0.5f),
+                        titleContentColor = Color.White,
+                        actionIconContentColor = Color.White
+                    ),
+                    actions = {
+                        IconButton(onClick = { viewModel.fetchApks() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        }
+                    }
+                )
+            },
+            modifier = Modifier.fillMaxSize()
+        ) { innerPadding ->
+            Box(modifier = Modifier.padding(innerPadding)) {
+                AnimatedContent(
+                    targetState = Pair(isLoading && appGroups.isEmpty(), selectedApp),
+                    transitionSpec = {
+                        fadeIn(animationSpec = tween(500)).togetherWith(fadeOut(animationSpec = tween(500)))
+                    },
+                    label = "ContentAnimation"
+                ) { (isInitialLoading, currentSelectedApp) ->
+                    if (isInitialLoading) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Color(0xFF00FF88))
+                        }
+                    } else if (currentSelectedApp == null) {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            contentPadding = PaddingValues(vertical = 16.dp)
+                        ) {
+                            val launcherName = "ACE Launcher"
+                            val launcherUpdates = appGroups[launcherName]
+                            
+                            if (launcherUpdates != null) {
+                                item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }) {
+                                    EntranceAnimation {
+                                        SectionHeader("Main App")
+                                    }
+                                }
+                                item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }) {
+                                    EntranceAnimation {
+                                        LauncherTile(
+                                            appName = launcherName,
+                                            latestVersion = launcherUpdates.firstOrNull()?.version ?: ""
+                                        ) {
+                                            selectedApp = launcherName
+                                        }
+                                    }
+                                }
+                                item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
+                            }
+
+                            val otherApps = appGroups.keys.filter { it != launcherName }.sorted().toList()
+                            if (otherApps.isNotEmpty()) {
+                                item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }) {
+                                    EntranceAnimation {
+                                        SectionHeader("Modules & Addons")
+                                    }
+                                }
+                                items(otherApps) { appName ->
+                                    EntranceAnimation {
+                                        AppTile(
+                                            appName = appName, 
+                                            latestVersion = appGroups[appName]?.firstOrNull()?.version ?: ""
+                                        ) {
+                                            selectedApp = appName
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        val updates = appGroups[currentSelectedApp] ?: emptyList()
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                        ) {
+                            items(updates.size) { index ->
+                                val update = updates[index]
+                                EntranceAnimation(delay = index * 50) {
+                                    ApkItem(update, isLatest = index == 0) {
+                                        viewModel.downloadAndInstall(context, update)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        openTosBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            openTos();
-        });
-
-        closeTosBtn.addEventListener('click', () => {
-            tosModal.classList.remove('show');
-        });
-
-        tosCheckbox.addEventListener('change', () => {
-            if (tosCheckbox.checked) {
-                tosAcceptBtn.style.opacity = '1';
-                tosAcceptBtn.style.pointerEvents = 'auto';
-                tosAcceptBtn.style.cursor = 'pointer';
-            } else {
-                tosAcceptBtn.style.opacity = '0.5';
-                tosAcceptBtn.style.pointerEvents = 'none';
-                tosAcceptBtn.style.cursor = 'not-allowed';
-            }
-        });
-
-        tosAcceptBtn.addEventListener('click', () => {
-            const wasAccepted = localStorage.getItem('tosAccepted');
-            localStorage.setItem('tosAccepted', 'true');
-            tosModal.classList.remove('show');
-            
-            // Nur das Such-Popup triggern, wenn man die Bedingungen das ERSTE Mal akzeptiert
-            if (!wasAccepted) {
-                triggerInfoPopup();
-            }
-        });
-
-
-        /* ==========================================
-           5. ANIMATED & INTERACTIVE BACKGROUND
-           ========================================== */
-        const container = document.getElementById('squares-container');
-        const greenColors = ['#04120a', '#0a2413', '#11351c', '#1b4d2a', '#286e3d', '#3d9c5b', '#00ff88'];
-        const purpleColors = ['#2b061a', '#4a0a2c', '#1c051a'];
-        const totalSquares = 130;
-        const squaresData = [];
-
-        for (let i = 0; i < totalSquares; i++) {
-            const square = document.createElement('div');
-            square.classList.add('sq');
-
-            const posX = Math.random() * 120 - 10;
-            const posY = Math.random() * 120 - 10;
-            square.style.left = posX + '%';
-            square.style.top = posY + '%';
-
-            const size = Math.floor(Math.random() * 160) + 60;
-            square.style.width = size + 'px';
-            square.style.height = size + 'px';
-
-            let colorPool = greenColors;
-            if (posX < 35 && posY < 45 && Math.random() > 0.3) {
-                colorPool = purpleColors;
-            } else if (Math.random() > 0.92) { 
-                colorPool = purpleColors;
-            }
-            square.style.backgroundColor = colorPool[Math.floor(Math.random() * colorPool.length)];
-
-            const driftX = (Math.random() * 60 - 30) + 'px';
-            const driftY = (Math.random() * 60 - 30) + 'px';
-            const driftRot = (Math.random() * 30 - 15) + 'deg';
-            const baseOpacity = (Math.random() * 0.4 + 0.35);
-
-            square.style.setProperty('--drift-x', driftX);
-            square.style.setProperty('--drift-y', driftY);
-            square.style.setProperty('--drift-rot', driftRot);
-            square.style.setProperty('--base-opacity', baseOpacity);
-
-            square.style.animationDuration = (Math.random() * 12 + 10) + 's';
-            square.style.animationDelay = '-' + (Math.random() * 20) + 's';
-
-            container.appendChild(square);
-            
-            squaresData.push({
-                el: square,
-                x: posX,
-                y: posY,
-                size: size,
-                depth: Math.random() * 1.5 + 0.5,
-                currentIx: 0,
-                currentIy: 0
-            });
+        val downloadStatus by viewModel.downloadStatus.collectAsState()
+        if (downloadStatus != null) {
+            DownloadDialog(
+                status = downloadStatus!!,
+                onDismiss = { viewModel.clearDownloadStatus() }
+            )
         }
+    }
+}
 
-        let mouseX = window.innerWidth / 2;
-        let mouseY = window.innerHeight / 2;
-        let targetMouseX = mouseX;
-        let targetMouseY = mouseY;
+@Composable
+fun EntranceAnimation(delay: Int = 0, content: @Composable () -> Unit) {
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (delay > 0) delay(delay.toLong())
+        visible = true
+    }
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(animationSpec = tween(400)) + slideInVertically(
+            initialOffsetY = { 40 },
+            animationSpec = tween(400)
+        ),
+        content = { content() }
+    )
+}
 
-        document.addEventListener('mousemove', (e) => {
-            targetMouseX = e.clientX;
-            targetMouseY = e.clientY;
-        });
+@Composable
+fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        color = Color.White.copy(alpha = 0.7f),
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(bottom = 4.dp, top = 8.dp)
+    )
+}
 
-        document.addEventListener('touchmove', (e) => {
-            if(e.touches.length > 0) {
-                targetMouseX = e.touches[0].clientX;
-                targetMouseY = e.touches[0].clientY;
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LauncherTile(appName: String, latestVersion: String, onClick: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "ScaleAnimation"
+    )
+    
+    Card(
+        onClick = onClick,
+        interactionSource = interactionSource,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(140.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            },
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.05f),
+            contentColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.15f))
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color(0xFF00FF88).copy(alpha = 0.05f), Color.Transparent)
+                        )
+                    )
+            )
+            
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = appName,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF00FF88)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        color = Color(0xFF00FF88).copy(alpha = 0.2f),
+                        shape = MaterialTheme.shapes.small,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF00FF88).copy(alpha = 0.3f))
+                    ) {
+                        Text(
+                            text = "Latest: $latestVersion",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color(0xFF00FF88)
+                        )
+                    }
+                }
             }
-        });
+        }
+    }
+}
 
-        function animateInteractivity() {
-            mouseX += (targetMouseX - mouseX) * 0.1;
-            mouseY += (targetMouseY - mouseY) * 0.1;
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppTile(appName: String, latestVersion: String, onClick: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.94f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "ScaleAnimation"
+    )
 
-            const winW = window.innerWidth;
-            const winH = window.innerHeight;
+    Card(
+        onClick = onClick,
+        interactionSource = interactionSource,
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1.1f)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            },
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.05f),
+            contentColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.1f))
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = appName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+            
+            Surface(
+                color = Color.White.copy(alpha = 0.1f),
+                shape = MaterialTheme.shapes.extraSmall
+            ) {
+                Text(
+                    text = "v$latestVersion",
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.White.copy(alpha = 0.8f)
+                )
+            }
+        }
+    }
+}
 
-            squaresData.forEach(data => {
-                const sqCenterX = (data.x / 100) * winW + (data.size / 2);
-                const sqCenterY = (data.y / 100) * winH + (data.size / 2);
+@Composable
+fun ApkItem(update: AppUpdate, isLatest: Boolean, onDownload: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        colors = if (isLatest) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)) 
+                 else CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp, 
+            if (isLatest) Color(0xFF00FF88).copy(alpha = 0.3f) else Color.White.copy(alpha = 0.1f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Version ${update.version}", 
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White
+                    )
+                    if (isLatest) {
+                        val infiniteTransition = rememberInfiniteTransition(label = "Pulse")
+                        val alpha by infiniteTransition.animateFloat(
+                            initialValue = 0.7f,
+                            targetValue = 1f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(1000, easing = LinearEasing),
+                                repeatMode = RepeatMode.Reverse
+                            ),
+                            label = "Alpha"
+                        )
+                        
+                        Surface(
+                            modifier = Modifier.padding(start = 8.dp).graphicsLayer { this.alpha = alpha },
+                            color = Color(0xFF00FF88),
+                            shape = MaterialTheme.shapes.extraSmall
+                        ) {
+                            Text(
+                                text = "LATEST",
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.Black,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = update.file.name, 
+                    style = MaterialTheme.typography.labelSmall, 
+                    color = Color.White.copy(alpha = 0.5f)
+                )
+            }
+            Button(
+                onClick = onDownload,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isLatest) Color(0xFF00FF88) else Color.White.copy(alpha = 0.1f),
+                    contentColor = if (isLatest) Color.Black else Color.White
+                ),
+                shape = MaterialTheme.shapes.small
+            ) {
+                Text("Update", fontWeight = FontWeight.SemiBold)
+            }
+        }
+    }
+}
 
-                const dx = mouseX - sqCenterX;
-                const dy = mouseY - sqCenterY;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+@Composable
+fun DownloadDialog(status: DownloadStatus, onDismiss: () -> Unit) {
+    Dialog(onDismissRequest = { if (status is DownloadStatus.Error || status is DownloadStatus.Completed) onDismiss() }) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A1A)),
+            shape = RoundedCornerShape(16.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF00FF88).copy(alpha = 0.3f))
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                when (status) {
+                    is DownloadStatus.Downloading -> {
+                        Text(
+                            "Downloading update",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            status.fileName,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.5f)
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        val animatedProgress by animateFloatAsState(
+                            targetValue = status.progress,
+                            animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
+                            label = "ProgressAnimation"
+                        )
+                        
+                        LinearProgressIndicator(
+                            progress = { animatedProgress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp)),
+                            color = Color(0xFF00FF88),
+                            trackColor = Color.White.copy(alpha = 0.1f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "${(status.progress * 100).toInt()}%",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color(0xFF00FF88),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    is DownloadStatus.Completed -> {
+                        Icon(
+                            androidx.compose.material.icons.Icons.Default.Refresh,
+                            contentDescription = null,
+                            tint = Color(0xFF00FF88),
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Download completed", color = Color.White)
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Button(
+                            onClick = onDismiss,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00FF88))
+                        ) {
+                            Text("Close", color = Color.Black)
+                        }
+                    }
+                    is DownloadStatus.Error -> {
+                        Text("Error", color = Color.Red, style = MaterialTheme.typography.titleLarge)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(status.message, color = Color.White, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Button(onClick = onDismiss) {
+                            Text("OK")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
-                let repelX = 0;
-                let repelY = 0;
-                const repelRadius = 180;
+fun installApkFromUri(context: Context, uri: Uri) {
+    val intent = Intent(Intent.ACTION_VIEW)
+    intent.setDataAndType(uri, "application/vnd.android.package-archive")
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    
+    try {
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        Toast.makeText(context, "Installation could not be started: ${e.message}", Toast.LENGTH_LONG).show()
+    }
+}
+
+class BackgroundSquare(
+    val xPercent: Float,
+    val yPercent: Float,
+    val size: Float,
+    val color: Color,
+    val depth: Float,
+    val driftX: Float,
+    val driftY: Float,
+    val driftRot: Float,
+    val baseOpacity: Float,
+    val animDuration: Long,
+    val animDelay: Long
+) {
+    var currentIx = 0f
+    var currentIy = 0f
+}
+
+@Composable
+fun InteractiveBackground() {
+    val greenColors = listOf(
+        Color(0xFF04120A), Color(0xFF0A2413), Color(0xFF11351C),
+        Color(0xFF1B4D2A), Color(0xFF286E3D), Color(0xFF3D9C5B), Color(0xFF00FF88)
+    )
+    val purpleColors = listOf(
+        Color(0xFF2B061A), Color(0xFF4A0A2C), Color(0xFF1C051A)
+    )
+
+    val squares = remember {
+        List(130) {
+            val posX = Random.nextFloat() * 1.2f - 0.1f
+            val posY = Random.nextFloat() * 1.2f - 0.1f
+            val isPurple = (posX < 0.35f && posY < 0.45f && Random.nextFloat() > 0.3f) || Random.nextFloat() > 0.92f
+            val colorPool = if (isPurple) purpleColors else greenColors
+            BackgroundSquare(
+                xPercent = posX,
+                yPercent = posY,
+                size = Random.nextFloat() * 160f + 60f,
+                color = colorPool.random(),
+                depth = Random.nextFloat() * 1.5f + 0.5f,
+                driftX = Random.nextFloat() * 60f - 30f,
+                driftY = Random.nextFloat() * 60f - 30f,
+                driftRot = Random.nextFloat() * 30f - 15f,
+                baseOpacity = Random.nextFloat() * 0.4f + 0.35f,
+                animDuration = Random.nextLong(10000, 22000),
+                animDelay = Random.nextLong(0, 20000)
+            )
+        }
+    }
+
+    var mousePos by remember { mutableStateOf(Offset(-1000f, -1000f)) }
+    var targetMousePos by remember { mutableStateOf(Offset(-1000f, -1000f)) }
+    var frameTime by remember { mutableStateOf(0L) }
+
+    LaunchedEffect(Unit) {
+        val startTime = System.currentTimeMillis()
+        while (true) {
+            withFrameNanos { _ ->
+                val now = System.currentTimeMillis()
+                frameTime = now - startTime
+                
+                val dx = targetMousePos.x - mousePos.x
+                val dy = targetMousePos.y - mousePos.y
+                mousePos = Offset(mousePos.x + dx * 0.1f, mousePos.y + dy * 0.1f)
+            }
+        }
+    }
+
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(Color(0xFF020503))
+        .pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent()
+                    if (event.type == PointerEventType.Move || event.type == PointerEventType.Press) {
+                        targetMousePos = event.changes.first().position
+                    }
+                }
+            }
+        }
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val winW = size.width
+            val winH = size.height
+
+            squares.forEach { sq ->
+                val sqCenterX = sq.xPercent * winW + (sq.size / 2)
+                val sqCenterY = sq.yPercent * winH + (sq.size / 2)
+
+                val dx = mousePos.x - sqCenterX
+                val dy = mousePos.y - sqCenterY
+                val dist = sqrt(dx * dx + dy * dy)
+
+                var repelX = 0f
+                var repelY = 0f
+                val repelRadius = 180f
+                var brightness = 1.0f
 
                 if (dist < repelRadius) {
-                    const force = (repelRadius - dist) / repelRadius;
-                    repelX = -(dx / dist) * force * 50;
-                    repelY = -(dy / dist) * force * 50;
-                    
-                    data.el.style.filter = `brightness(1.6) drop-shadow(0 0 10px ${data.el.style.backgroundColor})`;
-                    data.el.style.zIndex = "10";
-                } else {
-                    data.el.style.filter = 'none';
-                    data.el.style.zIndex = "1";
+                    val force = (repelRadius - dist) / repelRadius
+                    repelX = -(dx / dist) * force * 50f
+                    repelY = -(dy / dist) * force * 50f
+                    brightness = 1.6f
                 }
 
-                const parallaxX = ((mouseX / winW) - 0.5) * -60 * data.depth;
-                const parallaxY = ((mouseY / winH) - 0.5) * -60 * data.depth;
+                val parallaxX = ((mousePos.x / winW) - 0.5f) * -60f * sq.depth
+                val parallaxY = ((mousePos.y / winH) - 0.5f) * -60f * sq.depth
 
-                const targetIx = parallaxX + repelX;
-                const targetIy = parallaxY + repelY;
+                val targetIx = parallaxX + repelX
+                val targetIy = parallaxY + repelY
 
-                data.currentIx += (targetIx - data.currentIx) * 0.15;
-                data.currentIy += (targetIy - data.currentIy) * 0.15;
+                sq.currentIx += (targetIx - sq.currentIx) * 0.15f
+                sq.currentIy += (targetIy - sq.currentIy) * 0.15f
 
-                data.el.style.setProperty('--ix', `${data.currentIx}px`);
-                data.el.style.setProperty('--iy', `${data.currentIy}px`);
-            });
+                val animProgress = ((frameTime + sq.animDelay) % sq.animDuration).toFloat() / sq.animDuration
+                val phase = animProgress * 2f * Math.PI.toFloat()
+                val osc = (sin(phase) + 1f) / 2f 
+                
+                val currentDriftX = sq.driftX * osc
+                val currentDriftY = sq.driftY * osc
+                val currentRot = sq.driftRot * osc
+                val currentScale = 1.0f + 0.05f * osc
+                val currentOpacity = sq.baseOpacity + 0.15f * osc
 
-            requestAnimationFrame(animateInteractivity);
+                withTransform({
+                    translate(sq.xPercent * winW + sq.currentIx + currentDriftX, sq.yPercent * winH + sq.currentIy + currentDriftY)
+                    rotate(currentRot, pivot = Offset(sq.size / 2, sq.size / 2))
+                    scale(currentScale, currentScale, pivot = Offset(sq.size / 2, sq.size / 2))
+                }) {
+                    drawRoundRect(
+                        color = sq.color.copy(alpha = (currentOpacity * brightness).coerceAtMost(1f)),
+                        size = androidx.compose.ui.geometry.Size(sq.size, sq.size),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(12f, 12f)
+                    )
+                }
+            }
+            
+            drawRect(
+                brush = Brush.radialGradient(
+                    0.0f to Color(0x1A020503),
+                    0.8f to Color(0xD9020503),
+                    center = Offset(winW * 0.3f, winH * 0.4f),
+                    radius = winW.coerceAtLeast(winH)
+                ),
+                size = size
+            )
         }
-        
-        animateInteractivity();
-    </script>
-</body>
-</html>
+    }
+}
