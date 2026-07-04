@@ -783,16 +783,38 @@
     </footer>
 
     <script>
-        /* ==========================================
-           0. NOTIFICATION SYSTEM
-           ========================================== */
-        function notifyApp(fileName) {
-            fetch('https://ntfy.sh/einfynn_ace_nex_downloads', {
-                method: 'POST',
-                body: 'Download: ' + fileName,
-                headers: { 'Title': 'ACE.NEX Download' }
-            }).catch(e => console.log("Notify error"));
+       /* ==========================================
+   0. NOTIFICATION SYSTEM
+   ========================================== */
+function notifyApp(fileName) {
+    // Synchronized with the app's topic: einfynn_ace_updates
+    fetch('https://ntfy.sh/einfynn_ace_updates', {
+        method: 'POST',
+        body: 'New update detected: ' + fileName,
+        headers: { 
+            'Title': 'ACE Launcher Update',
+            'Priority': 'default',
+            'Tags': 'arrow_up,package'
         }
+    }).catch(e => console.log("Notify error"));
+}
+
+// New function to broadcast to all users
+function broadcastUpdate(version) {
+    fetch('https://ntfy.sh/einfynn_ace_updates', {
+        method: 'POST',
+        body: 'A new version (v' + version + ') of ACE Launcher is now available! Open the ACE Updates app to download.',
+        headers: { 
+            'Title': '🚀 New Release Available',
+            'Priority': 'high',
+            'Tags': 'rocket,star'
+        }
+    }).then(() => {
+        alert('Broadcast sent! All users with the ACE Updates app will be notified.');
+    }).catch(e => {
+        alert('Error sending broadcast: ' + e);
+    });
+}
 
         /* ==========================================
            1. AUTOMATIC APK MANAGEMENT & SORTING
