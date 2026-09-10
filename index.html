@@ -138,6 +138,7 @@
         .header-buttons-group {
             display: flex;
             gap: 16px;
+            flex-wrap: wrap;
         }
 
         .header-btn {
@@ -664,6 +665,19 @@
         <div class="popup-title" id="popup-text-content">Searching latest version...</div>
     </div>
 
+    <!-- VERSION INFO MODAL -->
+    <div id="version-info-modal" class="modal-overlay">
+        <div class="modal-window" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>Version Info</h2>
+                <button class="close-modal-btn" id="close-version-info-btn">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align: center; display: flex; justify-content: center; align-items: center; padding: 20px;">
+                <img src="X.X.X.X.X[.X].png" alt="Version Naming Scheme" style="width: 100%; height: auto; max-height: 70vh; object-fit: contain; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
+            </div>
+        </div>
+    </div>
+
     <!-- TOS MODAL -->
     <div id="tos-modal" class="modal-overlay">
         <div class="modal-window" style="max-width: 800px;">
@@ -780,6 +794,14 @@
 
     <header class="top-header">
         <div class="header-buttons-group">
+            <button class="header-btn" id="open-version-info-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                Version Info
+            </button>
             <button class="header-btn" id="open-tos-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -803,7 +825,7 @@
     <main class="main-content">
         <div class="glass-text-panel">
             <h1 class="title">ACE<br>    NEX</h1>
-            <p class="subtitle"This Launcher and extensions are for → <strong style="color:#ffffff;">ANDROID 16 </strong></p>
+            <p class="subtitle">This Launcher and extensions are for → <strong style="color:#ffffff;">ANDROID 16 </strong></p>
         </div>
     </main>
 
@@ -1227,7 +1249,7 @@
         });
 
         /* ==========================================
-           5. BOOT SEQUENCE & TOS
+           5. BOOT SEQUENCE & MODALS (TOS / VERSION INFO)
            ========================================== */
            
         const tosModal = document.getElementById('tos-modal');
@@ -1238,6 +1260,33 @@
         const infoPopup = document.getElementById('info-popup');
         const loader = document.getElementById('loader');
         const popupTextContent = document.getElementById('popup-text-content');
+
+        // VERSION INFO MODAL CONTROLLER
+        const versionInfoModal = document.getElementById('version-info-modal');
+        const openVersionInfoBtn = document.getElementById('open-version-info-btn');
+        const closeVersionInfoBtn = document.getElementById('close-version-info-btn');
+
+        if (openVersionInfoBtn && versionInfoModal) {
+            openVersionInfoBtn.addEventListener('click', () => {
+                versionInfoModal.classList.add('show');
+            });
+        }
+
+        if (closeVersionInfoBtn && versionInfoModal) {
+            closeVersionInfoBtn.addEventListener('click', () => {
+                versionInfoModal.classList.remove('show');
+            });
+        }
+
+        // Close modal when clicking outside of it
+        window.addEventListener('click', (e) => {
+            if (e.target === versionInfoModal) {
+                versionInfoModal.classList.remove('show');
+            }
+            if (e.target === downloadModal) {
+                downloadModal.classList.remove('show');
+            }
+        });
 
         let isTosAccepted = localStorage.getItem('ace_tos_accepted') === 'true';
 
