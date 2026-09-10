@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACE NEX — The only Launcher you need</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;700&display=swap');
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020508;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* --- PARTICLE CANVAS LOADING SCREEN --- */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #000000;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
+            overflow: hidden;
+        }
+
+        #loader-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- LARGER & MODERN INFO POPUP --- */
+        #info-popup {
+            position: fixed;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 22px 40px;
+            border-radius: 24px;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            visibility: hidden;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease;
+            pointer-events: none;
+            text-align: center;
+            max-width: 90%;
+            min-width: 320px;
+        }
+
+        #info-popup.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #info-popup.fade-out {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-30px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 1, 1);
+        }
+
+        .popup-title {
+            font-family: 'Space Grotesk', sans-serif;
+            color: #00e5ff;
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: -0.01em;
+            line-height: 1.4;
+            text-shadow: 0 2px 10px rgba(0, 229, 255, 0.3);
+        }
+
+        /* --- BACKGROUND CONTAINER --- */
+        .bg-container {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .sq {
+            position: absolute;
+            border-radius: 16px;
+            mix-blend-mode: screen;
+            pointer-events: none;
+            animation: floatAround infinite ease-in-out;
+        }
+
+        @keyframes floatAround {
+            0%, 100% {
+                transform: translate(var(--ix, 0px), var(--iy, 0px)) rotate(0deg) scale(1);
+                opacity: var(--base-opacity);
+            }
+            50% {
+                transform: translate(calc(var(--drift-x) + var(--ix, 0px)), calc(var(--drift-y) + var(--iy, 0px))) rotate(var(--drift-rot)) scale(1.05);
+                opacity: calc(var(--base-opacity) + 0.15);
+            }
+        }
+
+        .bg-vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(2, 5, 8, 0.1) 0%, rgba(2, 5, 8, 0.95) 100%);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* --- HEADER AREA --- */
+        .top-header {
+            position: relative;
+            width: 100%;
+            padding: 30px 10%;
+            display: flex;
+            justify-content: flex-end;
+            z-index: 30;
+        }
+
+        .header-buttons-group {
+            display: flex;
+            gap: 16px;
+        }
+
+        .header-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #00e5ff;
+            border-color: rgba(0, 229, 255, 0.4);
+            box-shadow: 0 8px 25px rgba(0, 229, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* --- MODAL BASE SYSTEM --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 5, 8, 0.7);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-window {
+            background: rgba(15, 20, 28, 0.6);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 28px;
+            width: 90%;
+            max-width: 850px; 
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal-overlay.show .modal-window {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 32px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .modal-header h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            color: #ffffff;
+            font-size: 1.5rem;
+            letter-spacing: -0.01em;
+        }
+
+        .close-modal-btn {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 2rem;
+            line-height: 1;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.2s ease;
+            padding: 0;
+        }
+
+        .close-modal-btn:hover {
+            opacity: 1;
+            color: #00e5ff;
+            transform: scale(1.1);
+        }
+
+        .modal-body {
+            padding: 28px 32px 32px 32px;
+            overflow-y: auto;
+        }
+
+        /* --- SPLIT LAYOUT FOR DOWNLOAD HUB --- */
+        .hub-split-layout {
+            display: flex;
+            gap: 28px;
+            align-items: stretch;
+        }
+
+        .hub-left-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hub-right-column {
+            flex: 1.6;
+            display: flex;
+            flex-direction: column;
+            max-height: 50vh;
+            overflow-y: auto;
+            padding-right: 12px;
+        }
+
+        .hub-right-column::-webkit-scrollbar { width: 6px; }
+        .hub-right-column::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
+
+        .vertical-divider {
+            width: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            flex-shrink: 0;
+            margin: 10px 0;
+        }
+
+        /* --- DOWNLOAD HUB CARDS --- */
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255, 255, 255, 0.4);
+            margin-bottom: 12px;
+        }
+
+        .extensions-list-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .hub-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            color: #ffffff;
+        }
+
+        .hub-card:hover {
+            background: rgba(255, 255, 255, 0.09);
+            border-color: rgba(0, 229, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 229, 255, 0.15);
+        }
+
+        .hub-card.main-launcher-card {
+            background: rgba(0, 229, 255, 0.06);
+            border-color: rgba(0, 229, 255, 0.3);
+            flex-direction: column;
+            text-align: center;
+            padding: 40px 24px;
+            height: 100%; 
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .hub-card.main-launcher-card:hover {
+            background: rgba(0, 229, 255, 0.12);
+            border-color: rgba(0, 229, 255, 0.6);
+        }
+
+        .main-launcher-card .hub-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 22px;
+        }
+        
+        .main-launcher-card .hub-title {
+            font-size: 1.5rem;
+            white-space: normal;
+        }
+
+        .hub-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            object-fit: cover;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            flex-shrink: 0;
+            background: #020508;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hub-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .hub-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .hub-desc {
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.6);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* --- BACK BUTTON & VERSION LIST --- */
+        .back-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #00e5ff;
+            border-color: rgba(0, 229, 255, 0.4);
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.15);
+        }
+
+        .app-header-preview {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .app-header-preview img {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            object-fit: cover;
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+        }
+
+        .version-history-list {
+            max-height: 50vh;
+            overflow-y: auto;
+            padding-right: 12px;
+        }
+
+        .version-history-list::-webkit-scrollbar { width: 6px; }
+        .version-history-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+
+        .version-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 14px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-decoration: none;
+            color: #ffffff;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .version-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(0, 229, 255, 0.4);
+            transform: translateX(4px);
+        }
+
+        .version-item.latest {
+            border-color: rgba(0, 229, 255, 0.4);
+            background: rgba(0, 229, 255, 0.08);
+        }
+
+        .version-tag {
+            font-size: 0.75rem;
+            background: rgba(0, 229, 255, 0.15);
+            color: #00e5ff;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            white-space: nowrap;
+        }
+
+        /* --- MAIN CONTENT & GLASS TEXT PANEL --- */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 10%;
+            z-index: 5;
+        }
+
+        .glass-text-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 48px;
+            border-radius: 32px;
+            display: inline-flex;
+            flex-direction: column;
+            max-width: fit-content;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(3.5rem, 8vw, 8rem);
+            line-height: 0.95;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #ffffff 30%, #80deea 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 24px;
+            text-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .subtitle {
+            font-size: clamp(1.1rem, 2vw, 1.35rem);
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.85);
+            max-width: 540px;
+            line-height: 1.6;
+            text-shadow: 0 4px 14px rgba(0,0,0,0.5);
+        }
+
+        /* --- FOOTER AREA --- */
+        .bottom-bar {
+            width: 100%;
+            padding: 40px 10%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            z-index: 10;
+            background: linear-gradient(to top, rgba(2,5,8, 0.9) 20%, transparent 100%);
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            color: #ffffff;
+            font-size: 1.15rem;
+            font-weight: 600;
+            padding: 18px 40px;
+            border-radius: 18px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(0, 229, 255, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(0, 229, 255, 0.6);
+            color: #00e5ff;
+        }
+
+        .apk-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .apk-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.15rem;
+            color: #ffffff;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+
+        .apk-meta {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .branding {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+        }
+
+        .branding span {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* --- RESPONSIVE OPTIMIZATION --- */
+        @media (max-width: 900px) {
+            .top-header { padding: 20px 6%; }
+            .main-content { padding: 40px 6% 20px 6%; }
+            .glass-text-panel { padding: 32px; }
+            .bottom-bar { 
+                flex-direction: column-reverse; 
+                align-items: center; 
+                padding: 20px 6% 30px 6%; 
+                gap: 24px; 
+            }
+            .footer-left { 
+                flex-direction: column; 
+                align-items: center; 
+                width: 100%; 
+                gap: 16px; 
+            }
+            .download-btn { width: 100%; justify-content: center; }
+            .apk-info { text-align: center; }
+            .branding { text-align: center; width: 100%; }
+        }
+
+        @media (max-width: 768px) {
+            .hub-split-layout {
+                flex-direction: column;
+                gap: 16px;
+            }
+            .vertical-divider {
+                width: 100%;
+                height: 4px;
+                margin: 8px 0;
+            }
+            .hub-right-column {
+                max-height: none;
+                overflow-y: visible;
+                padding-right: 0;
+            }
+            .extensions-list-grid {
+                grid-template-columns: 1fr;
+            }
+            .hub-card.main-launcher-card {
+                padding: 24px;
+                flex-direction: row;
+                text-align: left;
+            }
+            .main-launcher-card .hub-icon {
+                width: 64px;
+                height: 64px;
+            }
+        }
+
+        /* TOS DOC */
+        .tos-document {
+            background: rgba(255, 255, 255, 0.03) !important;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 16px !important;
+            padding: 24px !important;
+        }
+        .tos-document h3 { color: #ffffff; font-family: 'Space Grotesk', sans-serif; margin-top: 24px; margin-bottom: 8px; font-size: 1.1rem; }
+        .tos-document h4 { color: #80deea; margin-top: 16px; margin-bottom: 6px; font-size: 0.95rem; }
+        .tos-document p { margin-bottom: 12px; color: rgba(255, 255, 255, 0.8); }
+        .tos-document ul { margin-bottom: 12px; padding-left: 20px; color: rgba(255, 255, 255, 0.8); }
+        .tos-document li { margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+
+    <!-- PARTICLE CANVAS LOADER -->
+    <div id="loader">
+        <canvas id="loader-canvas"></canvas>
+    </div>
+
+    <div id="info-popup">
+        <div class="popup-title" id="popup-text-content">Searching latest version...</div>
+    </div>
+
+    <!-- TOS MODAL -->
+    <div id="tos-modal" class="modal-overlay">
+        <div class="modal-window" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2>Terms of Service & Privacy</h2>
+                <button class="close-modal-btn" id="close-tos-btn" style="display: none;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 16px; line-height: 1.5; color: rgba(255, 255, 255, 0.7); font-size: 0.95rem;">
+                    To download and use ACE Launcher and its extensions, you must review and accept our Terms of Use and Privacy Policy.
+                </p>
+                
+                <div class="tos-document" style="max-height: 45vh; overflow-y: auto; font-size: 0.85rem; margin-bottom: 24px; line-height: 1.6;">
+                    <h3 style="margin-top: 0; font-size: 1.3rem; color: #00e5ff;">Terms of Use – ACE Launcher</h3>
+                    <p style="opacity: 0.5; font-size: 0.8rem;">Last Updated: July 1, 2026</p>
+                    <p>Welcome to ACE Launcher. Please read these Terms of Use ("Terms") carefully before using the ACE Launcher application and its associated extensions, plug-ins, or add-ons (collectively, the "Services").</p>
+                    <p>By downloading, installing, or using the Services, you agree to be bound by these Terms. If you do not agree to these Terms, you may not use the Services.</p>
+
+                    <h3>1. License Grant</h3>
+                    <p>We grant you a limited, non-exclusive, non-transferable, and revocable license to use ACE Launcher and its extensions for personal, non-commercial purposes on your Android devices. You are expressly prohibited from:</p>
+                    <ul>
+                        <li>Decompiling, disassembling, or reverse engineering the app or any part thereof, unless explicitly permitted by applicable law.</li>
+                        <li>Using the Services for any illegal, fraudulent, or unauthorized purposes.</li>
+                        <li>Distributing modified versions of the app or copying the app's intellectual property without prior consent.</li>
+                    </ul>
+
+                    <h3>2. Features and Extensions</h3>
+                    <p>ACE Launcher and its extensions are provided free of charge with their current feature set. We reserve the right to modify, update, adapt, or temporarily or permanently discontinue features or extensions at any time.</p>
+
+                    <h3>3. Privacy</h3>
+                    <p>Your privacy is important to us. The collection and processing of personal data are conducted exclusively within the framework of applicable data protection laws. Detailed information can be found in our Privacy Policy below.</p>
+
+                    <h3>4. Disclaimer of Warranties</h3>
+                    <p>The Services are provided "as is" and "as available." We do not guarantee that ACE Launcher will be error-free, uninterrupted, or fully functional on all Android devices.</p>
+                    <p>We are not liable for any damages (e.g., data loss, system errors, or impairments to other apps) arising from the installation or use of the app or its extensions on your device, unless caused by our gross negligence or intentional misconduct.</p>
+
+                    <h3>5. Intellectual Property</h3>
+                    <p>All rights, titles, and interests in and to ACE Launcher, including its design, logos, source code, graphical user interface, and extensions, belong exclusively to us (the developers). "ACE Launcher" is a protected designation.</p>
+
+                    <h3>6. Changes to the Terms</h3>
+                    <p>We reserve the right to modify these Terms of Use at any time. If we make changes, we will inform you via an update within the app or through the platform where the app is provided. Continued use of the Services after a modification constitutes acceptance of the new Terms.</p>
+
+                    <h3>7. Governing Law and Contact</h3>
+                    <p>These Terms are governed by the laws of Germany. If you have any questions or feedback regarding ACE Launcher, you can contact us at support.einfynn@gmail.com.</p>
+
+                    <hr style="border: 0; border-top: 1px solid rgba(255, 255, 255, 0.1); margin: 32px 0;">
+
+                    <h3 style="margin-top: 0; font-size: 1.3rem; color: #00e5ff;">Privacy Policy</h3>
+                    <p style="opacity: 0.5; font-size: 0.8rem;">Last Updated: July 1, 2026</p>
+                    <p>The protection of your personal data is a major concern for us. Below, we inform you about how we handle your data when you use ACE Launcher and its extensions (collectively, the "App").</p>
+
+                    <h3>1. Types of Processed Data and Purpose</h3>
+                    <h4>a) Device Permissions and Local Processing</h4>
+                    <p>As a core application for managing your Android user interface, ACE Launcher requires access to certain functions of your device to enable display and organization:</p>
+                    <ul>
+                        <li><strong>Installed Apps:</strong> Required to display and organize your apps on the home screen and in the app drawer.</li>
+                        <li><strong>Notifications (optional):</strong> If enabled, required to display notification badges on app icons.</li>
+                        <li><strong>Storage Access / Wallpapers (optional):</strong> Required to set custom wallpapers or back up your configurations.</li>
+                    </ul>
+                    
+                    <h4>b) Automatically Collected and Online Processed Data (Usage Data & Analytics)</h4>
+                    <p>The app does not operate entirely locally. To provide certain online functionalities of the extensions, improve stability, and troubleshoot errors, data is transmitted to servers. This includes pseudonymized technical data (e.g., via analytics services like Google Firebase Crashlytics):</p>
+                    <ul>
+                        <li>Device model, operating system version, and technical specifications.</li>
+                        <li>Log data in the event of an app crash (Crash Reports) to locate the error.</li>
+                        <li>Usage statistics regarding the features of the app and its extensions to continuously improve the user experience.</li>
+                    </ul>
+                    <p>The legal basis for this processing is our legitimate interest in ensuring app stability, security, and continuous optimization in accordance with Art. 6 Abs. 1 lit. f GDPR.</p>
+
+                    <h3>2. Sharing Data with Third Parties</h3>
+                    <p>Since no in-app purchases are integrated into the app, no transaction data is shared. Technical data is transferred exclusively to service providers for app analysis and stability monitoring (e.g., Google LLC), if integrated. No personal data is shared with third parties or ad networks for advertising purposes.</p>
+
+                    <h3>3. Your Rights</h3>
+                    <p>Regarding the processed data, you have the following rights under the GDPR:</p>
+                    <ul>
+                        <li>Right of access (Art. 15 GDPR)</li>
+                        <li>Right to rectification or erasure (Art. 16 & 17 GDPR)</li>
+                        <li>Right to restriction of processing (Art. 18 GDPR)</li>
+                        <li>Right to data portability (Art. 20 GDPR)</li>
+                        <li>Right to object to processing (Art. 21 GDPR)</li>
+                    </ul>
+                    <p>However, since we generally do not store directly identifiable personal data (such as names or email addresses) on servers, we are typically unable to assign pseudonymous data to a specific user.</p>
+
+                    <h3>4. Changes to this Privacy Policy</h3>
+                    <p>We reserve the right to adapt this Privacy Policy so that it always complies with current legal requirements or to implement changes to our features. The new Privacy Policy will then apply to your next visit.</p>
+                </div>
+                
+                <label style="display: flex; align-items: flex-start; gap: 12px; cursor: pointer; color: #ffffff; font-size: 0.9rem; margin-bottom: 24px; user-select: none;">
+                    <input type="checkbox" id="tos-checkbox" style="margin-top: 3px; width: 16px; height: 16px; accent-color: #00e5ff; cursor: pointer;">
+                    <span>I have read and agree to the Terms of Use and Privacy Policy.</span>
+                </label>
+                <button id="tos-accept-btn" class="download-btn" style="width: 100%; justify-content: center; opacity: 0.5; pointer-events: none; padding: 14px 24px; font-size: 1rem; cursor: not-allowed;">
+                    Accept & Continue
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DOWNLOAD CENTER MODAL -->
+    <div id="download-center-modal" class="modal-overlay">
+        <div class="modal-window">
+            <div class="modal-header">
+                <h2 id="modal-hub-title">Download Center</h2>
+                <button class="close-modal-btn" id="close-hub-btn">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-hub-body">
+                <!-- Dynamically populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-container" id="squares-container"></div>
+    <div class="bg-vignette"></div>
+
+    <header class="top-header">
+        <div class="header-buttons-group">
+            <button class="header-btn" id="open-tos-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                ToS & Privacy
+            </button>
+            <a href="mailto:support.einfynn@gmail.com" class="header-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                Support
+            </a>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="glass-text-panel">
+            <h1 class="title">ACE<br>    NEX</h1>
+            <p class="subtitle"This Launcher and extensions are for → <strong style="color:#ffffff;">ANDROID 16 </strong></p>
+        </div>
+    </main>
+
+    <footer class="bottom-bar">
+        <div class="footer-left">
+            <button id="open-download-hub-btn" class="download-btn">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download
+            </button>
+            
+            <div class="apk-info" id="main-apk-info">
+                <span class="apk-name" id="main-apk-title">ACE Launcher</span>
+                <span class="apk-meta" id="main-apk-details">Select builds & extensions</span>
+            </div>
+        </div>
+
+        <div class="branding">
+            Security Notice:<br>Download ACE Launcher <span>exclusively through this website & Google Play Store</span>.
+        </div>
+    </footer>
+
+    <script>
+        function notifyApp(fileName) {
+            fetch('https://ntfy.sh/einfynn_ace_updates', {
+                method: 'POST',
+                body: 'New update detected: ' + fileName,
+                headers: { 
+                    'Title': 'ACE Launcher Update',
+                    'Priority': 'default',
+                    'Tags': 'arrow_up,package'
+                }
+            }).catch(e => console.log("Notify error"));
+        }
+
+        /* ==========================================
+           1. DATA MANAGEMENT & LOGOS
+           ========================================== */
+        
+        const appLogos = {
+            "ACE Launcher": "ACE Launcher.png",
+            "Deploy NEWS": "Deploy News.png",
+            "ACE Weather": "ACE Weather.png",
+            "ACE Updates": "ACE Updates.png",
+            "The Folder": "The Folder.png",
+            "Koda HUB": "KODA Dashboard.png"
+        };
+
+        const apkFiles = [ 
+             "ACE Launcher 1.1.1.0.0.apk",
+             "ACE Launcher 1.1.0.0.3.apk",
+             "ACE Launcher 1.0.4.2.apk",
+             "ACE Launcher 1.0.4.1.apk",
+             "ACE Launcher 1.0.3.1.apk",
+             "ACE Launcher 1.0.3.0.apk",
+             "ACE Launcher 1.0.2.9.apk",
+             "ACE Launcher 1.0.2.8.apk",
+             "ACE Launcher 1.0.2.7.apk",
+             "ACE Launcher 1.0.2.6.apk",
+             "ACE Launcher 1.0.2.5.apk",
+             "ACE Launcher 1.0.2.4.apk",
+             "ACE Launcher 1.0.2.3.apk",
+             "ACE Launcher 1.0.2.2.apk",
+             "ACE Launcher 1.0.2.1.apk",
+             "ACE Launcher 1.0.2.0.apk",
+             "ACE Launcher 1.0.1.3.apk",
+             "ACE Launcher 1.0.1.2.apk",
+             "ACE Launcher 1.0.1.1.apk",
+             "ACE Launcher 1.0.1.0.apk",
+             "ACE Launcher 1.0.0.38.apk",
+             "ACE Launcher 1.0.0.37.apk",
+             "ACE Launcher 1.0.0.36.apk",
+             "ACE Launcher 1.0.0.35.apk",
+             "ACE Launcher 1.0.0.34.apk",
+             "ACE Launcher 1.0.0.33.apk",
+             "ACE Launcher 1.0.0.30.apk",
+             "ACE Launcher 1.0.0.29.apk",
+             "ACE Launcher 1.0.0.28.apk",
+             "ACE Launcher 1.0.0.27.apk",
+             "ACE Launcher 1.0.0.26.apk",
+             "ACE Launcher 1.0.0.25.apk",
+             "ACE Launcher 1.0.0.24.apk",
+             "ACE Launcher 1.0.0.23.apk",
+             "ACE Launcher 1.0.0.22.apk",
+             "ACE Launcher 1.0.0.21.apk",
+             "ACE Launcher 1.0.0.20.apk",
+             "ACE Launcher 1.0.0.19.apk",
+             "ACE Launcher 1.0.0.18.apk",
+             "ACE Launcher 1.0.0.17.apk",
+             "ACE Launcher 1.0.0.16.apk",
+             "ACE Launcher 1.0.0.15.apk",
+             "ACE Launcher 1.0.0.14.apk",
+             "ACE Launcher 1.0.0.12.apk"
+        ];
+
+        const extensionFiles = [
+             "Deploy NEWS 1.0.1.0.apk",
+             "ACE Weather 1.0.1.0.apk",
+             "ACE Weather 1.0.1.1.apk",
+             "ACE Weather 1.0.1.2.apk",
+             "ACE Weather 1.0.1.3.apk",
+             "ACE Weather 1.0.1.4.apk",
+             "ACE Weather 1.0.1.5.apk",
+             "ACE Weather 1.1.0.0.apk",
+             "ACE Updates 1.0.0.1.apk",
+             "ACE Updates 1.0.0.2.apk",
+             "ACE Updates 1.0.1.0.apk",
+             "ACE Updates 1.0.1.1.apk",
+             "ACE Updates 1.0.1.3.apk",
+             "ACE Updates 1.0.1.4.apk",
+             "The Folder 1.0.1.0.apk",
+             "ACE Updates 1.0.1.5.apk",
+             "Koda HUB 0.0.0.1.apk"
+        ];
+
+        function extractVersion(filename) {
+            const match = filename.match(/(\d+\.\d+\.\d+\.\d+|\d+\.\d+\.\d+)/);
+            return match ? match[0] : "0.0.0";
+        }
+
+        function getBaseName(filename) {
+            return filename.replace(/\s*\d+\.\d+\.\d+(\.\d+)?\.apk$/i, '').trim();
+        }
+
+        function sortApks(a, b) {
+            const vA = extractVersion(a).split('.').map(Number);
+            const vB = extractVersion(b).split('.').map(Number);
+            for (let i = 0; i < Math.max(vA.length, vB.length); i++) {
+                const numA = vA[i] || 0;
+                const numB = vB[i] || 0;
+                if (numA !== numB) return numB - numA; 
+            }
+            return 0;
+        }
+
+        apkFiles.sort(sortApks);
+        extensionFiles.sort(sortApks);
+
+        /* ==========================================
+           2. DOWNLOAD HUB MODAL CONTROLLER
+           ========================================== */
+
+        const downloadModal = document.getElementById('download-center-modal');
+        const openDownloadHubBtn = document.getElementById('open-download-hub-btn');
+        const closeHubBtn = document.getElementById('close-hub-btn');
+        const modalHubBody = document.getElementById('modal-hub-body');
+        const modalHubTitle = document.getElementById('modal-hub-title');
+
+        openDownloadHubBtn.addEventListener('click', () => {
+            renderDownloadHubOverview();
+            downloadModal.classList.add('show');
+        });
+
+        closeHubBtn.addEventListener('click', () => {
+            downloadModal.classList.remove('show');
+        });
+
+        function renderDownloadHubOverview() {
+            modalHubTitle.textContent = "Download Center";
+
+            const groupedExtensions = {};
+            extensionFiles.forEach(file => {
+                const baseName = getBaseName(file);
+                if (!groupedExtensions[baseName]) {
+                    groupedExtensions[baseName] = [];
+                }
+                groupedExtensions[baseName].push(file);
+            });
+
+            const latestLauncherVersion = extractVersion(apkFiles[0]);
+
+            let html = `
+                <div class="hub-split-layout">
+                    
+                    <!-- LEFT COLUMN: MAIN LAUNCHER -->
+                    <div class="hub-left-column">
+                        <div class="section-label">Main Application</div>
+                        <div class="hub-card main-launcher-card" id="main-launcher-card-btn">
+                            <img src="${appLogos['ACE Launcher']}" alt="ACE Launcher Logo" class="hub-icon">
+                            <div class="hub-info" style="align-items: center;">
+                                <span class="hub-title">ACE Launcher</span>
+                                <span class="hub-desc">Core Application</span>
+                                <span class="version-tag" style="margin-top: 8px;">Latest v${latestLauncherVersion}</span>
+                                <span class="hub-desc" style="margin-top: 8px; font-size: 0.75rem; opacity: 0.7;">Click to see all ${apkFiles.length} builds</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CENTER DIVIDER -->
+                    <div class="vertical-divider"></div>
+
+                    <!-- RIGHT COLUMN: EXTENSIONS (GRID) -->
+                    <div class="hub-right-column">
+                        <div class="section-label">Extensions</div>
+                        <div class="extensions-list-grid">
+            `;
+
+            Object.keys(groupedExtensions).forEach(extName => {
+                const files = groupedExtensions[extName];
+                const latestVersion = extractVersion(files[0]);
+                const logoSrc = appLogos[extName] || "ACE Launcher.jpg";
+
+                html += `
+                            <div class="hub-card extension-item-btn" data-app-name="${extName}">
+                                <img src="${logoSrc}" alt="${extName} Logo" class="hub-icon">
+                                <div class="hub-info">
+                                    <span class="hub-title" title="${extName}">${extName}</span>
+                                    <span class="hub-desc" title="Latest v${latestVersion}">v${latestVersion}</span>
+                                </div>
+                                <svg style="flex-shrink:0;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </div>
+                `;
+            });
+
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+            modalHubBody.innerHTML = html;
+
+            document.getElementById('main-launcher-card-btn').addEventListener('click', () => {
+                renderAppVersionList("ACE Launcher", apkFiles);
+            });
+
+            document.querySelectorAll('.extension-item-btn').forEach(card => {
+                card.addEventListener('click', () => {
+                    const appName = card.getAttribute('data-app-name');
+                    renderAppVersionList(appName, groupedExtensions[appName]);
+                });
+            });
+        }
+
+        function renderAppVersionList(appName, fileList) {
+            modalHubTitle.textContent = "Select Version";
+            const logoSrc = appLogos[appName] || "ACE Launcher.jpg";
+
+            let html = `
+                <button class="back-btn" id="back-to-hub-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Back to Center
+                </button>
+
+                <div class="app-header-preview">
+                    <img src="${logoSrc}" alt="${appName}">
+                    <div>
+                        <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem;">${appName}</h3>
+                        <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">${fileList.length} build(s) available</p>
+                    </div>
+                </div>
+
+                <div class="version-history-list">
+            `;
+
+            fileList.forEach((file, index) => {
+                const version = extractVersion(file);
+                const isLatest = index === 0;
+
+                html += `
+                    <a href="${file}" download="${file}" class="version-item ${isLatest ? 'latest' : ''}" onclick="notifyApp('${file}')">
+                        <div>
+                            <span style="font-weight: 600; display: block;">Version ${version}</span>
+                            <span style="font-size: 0.8rem; opacity: 0.5;">APK File</span>
+                        </div>
+                        ${isLatest ? '<span class="version-tag">Latest Release</span>' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>'}
+                    </a>
+                `;
+            });
+
+            html += `</div>`;
+            modalHubBody.innerHTML = html;
+
+            document.getElementById('back-to-hub-btn').addEventListener('click', renderDownloadHubOverview);
+        }
+
+        /* ==========================================
+           3. BACKGROUND ANIMATION
+           ========================================== */
+           
+        const container = document.getElementById('squares-container');
+        const numSquares = 40; 
+        const lightBlueColors = ['#e0f7fa', '#b2ebf2', '#80deea', '#4dd0e1', '#26c6da', '#00bcd4', '#00acc1'];
+        const accentBlueColors = ['#e3f2fd', '#bbdefb', '#90caf9', '#64b5f6', '#42a5f5', '#2196f3'];
+
+        for (let i = 0; i < numSquares; i++) {
+            const sq = document.createElement('div');
+            sq.className = 'sq';
+            const size = Math.random() * 250 + 50; 
+            sq.style.width = `${size}px`;
+            sq.style.height = `${size}px`;
+            sq.style.left = `${Math.random() * 100}vw`;
+            sq.style.top = `${Math.random() * 100}vh`;
+            sq.style.setProperty('--ix', `0px`);
+            sq.style.setProperty('--iy', `0px`);
+            sq.style.setProperty('--drift-x', `${(Math.random() - 0.5) * 400}px`);
+            sq.style.setProperty('--drift-y', `${(Math.random() - 0.5) * 400}px`);
+            sq.style.setProperty('--drift-rot', `${(Math.random() - 0.5) * 90}deg`);
+            
+            const colorSet = Math.random() > 0.7 ? accentBlueColors : lightBlueColors;
+            sq.style.backgroundColor = colorSet[Math.floor(Math.random() * colorSet.length)];
+            sq.style.setProperty('--base-opacity', Math.random() * 0.15 + 0.05);
+            sq.style.animationDuration = `${Math.random() * 20 + 20}s`;
+            sq.style.animationDelay = `${Math.random() * -20}s`;
+
+            container.appendChild(sq);
+        }
+
+        /* ==========================================
+           4. MATTE BLUE SQUARE TEXT ANIMATION FOR LOADER
+           ========================================== */
+        
+        const loaderCanvas = document.getElementById('loader-canvas');
+        const lCtx = loaderCanvas.getContext('2d');
+        let loaderParticles = [];
+        let loaderAnimId;
+
+        const blueSquarePalette = [
+            '#64748b', // Slate 500
+            '#94a3b8', // Slate 400
+            '#475569', // Slate 600
+            '#5c8397', // Muted dark cyan
+            '#7ca1b4', // Dusty light blue
+            '#4a7c82', // Matte teal
+            '#6b9299'  // Greyish cyan
+        ];
+
+        function initLoaderTextParticles() {
+            loaderCanvas.width = window.innerWidth;
+            loaderCanvas.height = window.innerHeight;
+
+            const offCanvas = document.createElement('canvas');
+            const offCtx = offCanvas.getContext('2d');
+            offCanvas.width = loaderCanvas.width;
+            offCanvas.height = loaderCanvas.height;
+
+            const fontSize = Math.min(offCanvas.width * 0.12, 110);
+            offCtx.font = `700 ${fontSize}px 'Space Grotesk', sans-serif`;
+            offCtx.fillStyle = '#ffffff';
+            offCtx.textAlign = 'center';
+            offCtx.textBaseline = 'middle';
+            offCtx.fillText('ACE NEX', offCanvas.width / 2, offCanvas.height / 2);
+
+            const imageData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
+            const data = imageData.data;
+
+            const gap = Math.max(4, Math.floor(fontSize / 18));
+            const squareSize = gap - 1;
+
+            loaderParticles = [];
+
+            for (let y = 0; y < offCanvas.height; y += gap) {
+                for (let x = 0; x < offCanvas.width; x += gap) {
+                    const index = (y * offCanvas.width + x) * 4;
+                    const alpha = data[index + 3];
+
+                    if (alpha > 128) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const dist = Math.random() * Math.max(offCanvas.width, offCanvas.height) * 0.6 + 100;
+                        
+                        const startX = offCanvas.width / 2 + Math.cos(angle) * dist;
+                        const startY = offCanvas.height / 2 + Math.sin(angle) * dist;
+                        const color = blueSquarePalette[Math.floor(Math.random() * blueSquarePalette.length)];
+
+                        loaderParticles.push({
+                            x: startX,
+                            y: startY,
+                            targetX: x,
+                            targetY: y,
+                            size: squareSize,
+                            color: color,
+                            speed: 0.04 + Math.random() * 0.05, 
+                            delay: Math.random() * 25 
+                        });
+                    }
+                }
+            }
+        }
+
+        let loaderFrame = 0;
+        function animateLoaderText() {
+            lCtx.clearRect(0, 0, loaderCanvas.width, loaderCanvas.height);
+            loaderFrame++;
+
+            for (let i = 0; i < loaderParticles.length; i++) {
+                const p = loaderParticles[i];
+                if (loaderFrame < p.delay) continue;
+
+                p.x += (p.targetX - p.x) * p.speed;
+                p.y += (p.targetY - p.y) * p.speed;
+
+                lCtx.fillStyle = p.color;
+                lCtx.shadowBlur = 0; 
+                lCtx.fillRect(p.x, p.y, p.size, p.size);
+            }
+
+            loaderAnimId = requestAnimationFrame(animateLoaderText);
+        }
+
+        if (document.fonts) {
+            document.fonts.ready.then(() => {
+                initLoaderTextParticles();
+                animateLoaderText();
+            });
+        } else {
+            initLoaderTextParticles();
+            animateLoaderText();
+        }
+
+        window.addEventListener('resize', () => {
+            if (loaderParticles.length > 0) {
+                initLoaderTextParticles();
+            }
+        });
+
+        /* ==========================================
+           5. BOOT SEQUENCE & TOS
+           ========================================== */
+           
+        const tosModal = document.getElementById('tos-modal');
+        const openTosBtn = document.getElementById('open-tos-btn');
+        const closeTosBtn = document.getElementById('close-tos-btn');
+        const tosCheckbox = document.getElementById('tos-checkbox');
+        const tosAcceptBtn = document.getElementById('tos-accept-btn');
+        const infoPopup = document.getElementById('info-popup');
+        const loader = document.getElementById('loader');
+        const popupTextContent = document.getElementById('popup-text-content');
+
+        let isTosAccepted = localStorage.getItem('ace_tos_accepted') === 'true';
+
+        window.addEventListener('load', () => {
+            if(apkFiles.length > 0) {
+                popupTextContent.innerHTML = `Newest Release <span style="color:#ffffff;">${apkFiles[0]}</span>`;
+            }
+            
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                loader.style.visibility = 'hidden';
+                
+                setTimeout(() => {
+                    cancelAnimationFrame(loaderAnimId); 
+                    if (!isTosAccepted) {
+                        tosModal.classList.add('show');
+                    } else {
+                        showUpdatePopup();
+                    }
+                }, 800);
+            }, 2600);
+        });
+
+        function showUpdatePopup() {
+            infoPopup.classList.add('show');
+            setTimeout(() => {
+                infoPopup.classList.add('fade-out');
+                setTimeout(() => {
+                    infoPopup.classList.remove('show', 'fade-out');
+                }, 500);
+            }, 3500);
+        }
+
+        tosCheckbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                tosAcceptBtn.style.opacity = '1';
+                tosAcceptBtn.style.pointerEvents = 'auto';
+                tosAcceptBtn.style.cursor = 'pointer';
+            } else {
+                tosAcceptBtn.style.opacity = '0.5';
+                tosAcceptBtn.style.pointerEvents = 'none';
+                tosAcceptBtn.style.cursor = 'not-allowed';
+            }
+        });
+
+        tosAcceptBtn.addEventListener('click', () => {
+            localStorage.setItem('ace_tos_accepted', 'true');
+            isTosAccepted = true;
+            tosModal.classList.remove('show');
+            closeTosBtn.style.display = 'block'; 
+            showUpdatePopup();
+        });
+
+        openTosBtn.addEventListener('click', () => {
+            tosModal.classList.add('show');
+            closeTosBtn.style.display = 'block'; 
+            if (isTosAccepted) {
+                tosCheckbox.checked = true;
+                tosCheckbox.disabled = true;
+                tosAcceptBtn.textContent = "Accepted";
+                tosAcceptBtn.style.opacity = '0.5';
+                tosAcceptBtn.style.pointerEvents = 'none';
+            }
+        });
+
+        closeTosBtn.addEventListener('click', () => {
+            tosModal.classList.remove('show');
+        });
+
+        if (isTosAccepted) {
+            closeTosBtn.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
