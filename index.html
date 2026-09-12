@@ -1113,17 +1113,15 @@
             document.getElementById('back-to-hub-btn').addEventListener('click', renderDownloadHubOverview);
         }
 
-        /* ==========================================
-           3. BACKGROUND ANIMATION & INTERACTIVITY
+      /* ==========================================
+           3. BACKGROUND ANIMATION & LOKALE INTERAKTIVITÄT
            ========================================== */
            
         const container = document.getElementById('squares-container');
-        // Erhöht auf 150, damit sie den ganzen Bildschirm bedecken
-        const numSquares = 300; 
+        const numSquares = 300; // Genug Vierecke, um den Bildschirm zu füllen
         const lightBlueColors = ['#e0f7fa', '#b2ebf2', '#80deea', '#4dd0e1', '#26c6da', '#00bcd4', '#00acc1'];
         const accentBlueColors = ['#e3f2fd', '#bbdefb', '#90caf9', '#64b5f6', '#42a5f5', '#2196f3'];
 
-        // Array zum Speichern der Vierecke für die Interaktivität
         const allSquares = []; 
 
         for (let i = 0; i < numSquares; i++) {
@@ -1134,6 +1132,7 @@
             sq.style.height = `${size}px`;
             sq.style.left = `${Math.random() * 100}vw`;
             sq.style.top = `${Math.random() * 100}vh`;
+            
             sq.style.setProperty('--ix', `0px`);
             sq.style.setProperty('--iy', `0px`);
             sq.style.setProperty('--drift-x', `${(Math.random() - 0.5) * 400}px`);
@@ -1150,18 +1149,41 @@
             allSquares.push(sq);
         }
 
-        // Interaktiver Parallax-Effekt bei Mausbewegung
+        // Lokaler Abstoß-Effekt nur um den Mauszeiger herum
         document.addEventListener('mousemove', (e) => {
-            const mouseX = (e.clientX / window.innerWidth) - 0.5;
-            const mouseY = (e.clientY / window.innerHeight) - 0.5;
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+            
+            // Radius in Pixeln, ab dem die Vierecke reagieren
+            const interactionRadius = 250; 
 
-            allSquares.forEach((sq, index) => {
-                // Generiert unterschiedliche Ebenentiefen für den 3D-Effekt
-                const depth = (index % 10) + 2; 
+            allSquares.forEach(sq => {
+                const rect = sq.getBoundingClientRect();
                 
-                // Aktualisiert die Variablen --ix und --iy, die in der floatAround-Animation der CSS genutzt werden
-                sq.style.setProperty('--ix', `${mouseX * depth * 25}px`);
-                sq.style.setProperty('--iy', `${mouseY * depth * 25}px`);
+                // Mittelpunkt des jeweiligen Vierecks berechnen
+                const sqX = rect.left + rect.width / 2;
+                const sqY = rect.top + rect.height / 2;
+
+                // Distanz zwischen Maus und Viereck berechnen (Satz des Pythagoras)
+                const dx = sqX - mouseX;
+                const dy = sqY - mouseY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < interactionRadius) {
+                    // Je näher die Maus, desto stärker der Ausweich-Effekt (0 bis 1)
+                    const force = (interactionRadius - distance) / interactionRadius;
+                    
+                    // Verschiebt das Quadrat von der Maus weg (maximal 120px)
+                    const pushX = (dx / distance) * force * 120; 
+                    const pushY = (dy / distance) * force * 120;
+
+                    sq.style.setProperty('--ix', `${pushX}px`);
+                    sq.style.setProperty('--iy', `${pushY}px`);
+                } else {
+                    // Wenn die Maus zu weit weg ist, setze das Viereck auf Position 0 zurück
+                    sq.style.setProperty('--ix', `0px`);
+                    sq.style.setProperty('--iy', `0px`);
+                }
             });
         });
 
