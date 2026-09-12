@@ -1114,13 +1114,17 @@
         }
 
         /* ==========================================
-           3. BACKGROUND ANIMATION
+           3. BACKGROUND ANIMATION & INTERACTIVITY
            ========================================== */
            
         const container = document.getElementById('squares-container');
-        const numSquares = 40; 
+        // Erhöht auf 150, damit sie den ganzen Bildschirm bedecken
+        const numSquares = 150; 
         const lightBlueColors = ['#e0f7fa', '#b2ebf2', '#80deea', '#4dd0e1', '#26c6da', '#00bcd4', '#00acc1'];
         const accentBlueColors = ['#e3f2fd', '#bbdefb', '#90caf9', '#64b5f6', '#42a5f5', '#2196f3'];
+
+        // Array zum Speichern der Vierecke für die Interaktivität
+        const allSquares = []; 
 
         for (let i = 0; i < numSquares; i++) {
             const sq = document.createElement('div');
@@ -1143,7 +1147,23 @@
             sq.style.animationDelay = `${Math.random() * -20}s`;
 
             container.appendChild(sq);
+            allSquares.push(sq);
         }
+
+        // Interaktiver Parallax-Effekt bei Mausbewegung
+        document.addEventListener('mousemove', (e) => {
+            const mouseX = (e.clientX / window.innerWidth) - 0.5;
+            const mouseY = (e.clientY / window.innerHeight) - 0.5;
+
+            allSquares.forEach((sq, index) => {
+                // Generiert unterschiedliche Ebenentiefen für den 3D-Effekt
+                const depth = (index % 10) + 2; 
+                
+                // Aktualisiert die Variablen --ix und --iy, die in der floatAround-Animation der CSS genutzt werden
+                sq.style.setProperty('--ix', `${mouseX * depth * 25}px`);
+                sq.style.setProperty('--iy', `${mouseY * depth * 25}px`);
+            });
+        });
 
         /* ==========================================
            4. MATTE BLUE SQUARE TEXT ANIMATION FOR LOADER
